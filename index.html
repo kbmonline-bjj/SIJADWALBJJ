@@ -6,56 +6,156 @@
     <title>Sistem Informasi Pantauan Jadwal Neutron</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { background-color: #f4f6f9; }
-        .card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .studio-card { height: 100%; border-top: 4px solid #0d6efd; }
-        .jadwal-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .jadwal-item:last-child { border-bottom: none; }
-        .bentrok-alert { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+        /* Desain Modern & Tipografi */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155; 
+        }
+        
+        /* Navbar Glassmorphism */
+        .navbar-modern { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(12px); 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .navbar-brand { color: #0f172a !important; font-weight: 700; font-size: 1.4rem; }
+
+        /* Header / Filter Section */
+        .header-section {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        /* Input Kalender Elegan */
+        .form-control-modern {
+            border-radius: 16px;
+            border: 2px solid transparent;
+            padding: 0.9rem 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+        .form-control-modern:focus {
+            border-color: #93c5fd;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4);
+        }
+
+        /* Kartu Studio Modern */
+        .studio-card { 
+            background: #ffffff; 
+            border-radius: 24px; 
+            border: 1px solid #f1f5f9; 
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .studio-card:hover { transform: translateY(-5px); }
+        .studio-header { 
+            background: #f8fafc; 
+            padding: 1.2rem; 
+            text-align: center; 
+            font-weight: 700; 
+            color: #0f172a; 
+            border-bottom: 1px solid #e2e8f0; 
+            font-size: 1.15rem; 
+            letter-spacing: 0.5px;
+        }
+        
+        /* Item Jadwal */
+        .sesi-container { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+        .jadwal-item { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 16px; 
+            padding: 1.2rem; 
+            transition: all 0.2s; 
+        }
+        .jadwal-item:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        /* Peringatan Bentrok */
+        .bentrok-alert { 
+            border-color: #fecaca; 
+            background: #fff5f5; 
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); 
+        }
+        
+        /* Badges */
+        .badge-soft { 
+            background: #e0e7ff; 
+            color: #4f46e5; 
+            padding: 0.4rem 0.8rem; 
+            border-radius: 8px; 
+            font-weight: 600; 
+        }
+        .waktu-teks { font-size: 0.9rem; font-weight: 700; color: #475569; }
+        .mapel-teks { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 0.5rem 0; }
+        .pengajar-teks { font-size: 0.85rem; color: #64748b; font-weight: 500;}
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas fa-calendar-alt me-2"></i> SI Pantauan Jadwal & Operasional</a>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
+        <div class="container-fluid px-4 py-1">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-layer-group text-primary me-2 fs-3"></i> 
+                Pantauan Operasional Neutron
+            </a>
         </div>
     </nav>
 
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-4 pb-5">
         
-        <!-- ======================= -->
-        <!-- FILTER TANGGAL (KALENDER) -->
-        <!-- ======================= -->
-        <div class="card p-4 mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-5">
-                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Cek Ketersediaan Studio</h5>
-                    <p class="text-muted small mb-0 mt-1">Klik ikon kalender untuk memilih tanggal dan melihat jadwal studio.</p>
-                </div>
-                <div class="col-md-4 mt-3 mt-md-0">
-                    <!-- Ini yang diubah menjadi input kalender -->
-                    <input type="date" id="pilihTanggal" class="form-control form-control-lg text-primary fw-bold cursor-pointer">
-                </div>
+        <!-- Header & Filter -->
+        <div class="header-section">
+            <div>
+                <h2 class="fw-bold mb-2"><i class="far fa-calendar-check me-2"></i>Ketersediaan Studio</h2>
+                <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Pantau jadwal dan deteksi tumpang tindih waktu antar kelas.</p>
+            </div>
+            <div style="min-width: 250px;">
+                <input type="date" id="pilihTanggal" class="form-control form-control-modern w-100">
             </div>
         </div>
 
-        <!-- ======================= -->
-        <!-- AREA STUDIO (OTOMATIS) -->
-        <!-- ======================= -->
-        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold shadow-sm">
-            <i class="fas fa-exclamation-triangle me-2"></i> PERHATIAN: Ditemukan jadwal yang bentrok (waktu tumpang tindih) pada tanggal ini!
+        <!-- Area Peringatan Utama -->
+        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold shadow-sm rounded-4 border-0 mb-4 py-3">
+            <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok pada tanggal ini!
         </div>
 
-        <div id="peringatanKosong" class="alert alert-info d-none shadow-sm">
-            <i class="fas fa-info-circle me-2"></i> Tidak ada jadwal yang terdaftar pada tanggal yang Anda pilih.
+        <div id="peringatanKosong" class="alert alert-light d-none shadow-sm rounded-4 border mb-4 py-4 text-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486747.png" alt="Kosong" width="80" class="mb-3 opacity-50">
+            <h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5>
+            <p class="text-muted mb-0">Belum ada kelas atau kegiatan yang dijadwalkan pada tanggal ini.</p>
         </div>
 
-        <div class="row mb-5" id="areaStudio">
-            <!-- Kartu Studio akan di-generate oleh JavaScript disini -->
+        <!-- Grid Studio -->
+        <div class="row" id="areaStudio">
+            <!-- Kartu Studio di-generate oleh JS -->
         </div>
 
     </div>
@@ -68,11 +168,10 @@
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
 
-        // Konfigurasi Nama Hari & Bulan untuk konversi format Indonesia
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-        // Konversi dari kalender (YYYY-MM-DD) ke format CSV (Rabu, 10 Juni 2026)
+        // Konversi format (YYYY-MM-DD) -> (Rabu, 10 Juni 2026)
         function formatKeCSV(dateStr) {
             if(!dateStr) return "";
             let [y, m, d] = dateStr.split('-');
@@ -82,19 +181,7 @@
             return `${hari}, ${d} ${bulan} ${y}`;
         }
 
-        // Konversi dari format CSV (Rabu, 10 Juni 2026) ke kalender (YYYY-MM-DD)
-        function formatDariCSV(csvDateStr) {
-            let parts = csvDateStr.split(','); 
-            if(parts.length < 2) return "";
-            let dateParts = parts[1].trim().split(' ');
-            let d = dateParts[0].padStart(2, '0');
-            let mIndex = namaBulan.indexOf(dateParts[1]) + 1;
-            let m = mIndex.toString().padStart(2, '0');
-            let y = dateParts[2];
-            return `${y}-${m}-${d}`;
-        }
-
-        // Fungsi mengubah teks waktu (13.00-13.30) menjadi menit untuk deteksi bentrok
+        // Fungsi mengubah teks waktu untuk deteksi bentrok
         function parseWaktuToMinutes(waktuStr) {
             let match = waktuStr.match(/(\d{1,2})[\.\:](\d{2})\s*-\s*(\d{1,2})[\.\:](\d{2})/);
             if (match) {
@@ -106,34 +193,40 @@
             return null;
         }
 
-        Papa.parse(sheetUrl, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
-                
-                // Ambil daftar tanggal pertama dari data untuk diset sebagai nilai awal kalender
-                let tanggalUnik = [...new Set(globalData.map(item => item['Hari Tanggal']))];
-                if(tanggalUnik.length > 0) {
-                    let kalenderFormatAwal = formatDariCSV(tanggalUnik[0]);
-                    $('#pilihTanggal').val(kalenderFormatAwal).change();
+        $(document).ready(function() {
+            // 1. SET TANGGAL DEFAULT KE HARI INI SECARA OTOMATIS
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayFormatted = `${yyyy}-${mm}-${dd}`;
+            
+            // Masukkan nilai hari ini ke dalam kotak kalender
+            $('#pilihTanggal').val(todayFormatted);
+
+            // 2. AMBIL DATA DARI GOOGLE SHEETS
+            Papa.parse(sheetUrl, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
+                    
+                    // Trigger pencarian data berdasarkan tanggal hari ini (otomatis jalan saat website dibuka)
+                    $('#pilihTanggal').change();
                 }
-            }
+            });
         });
 
-        // Saat tanggal di kalender dipilih/berubah
+        // 3. LOGIKA SAAT TANGGAL DIGANTI / DIPROSES
         $('#pilihTanggal').on('change', function() {
             let selectedDateVal = $(this).val(); 
             if(!selectedDateVal) return;
 
-            // Terjemahkan tanggal kalender menjadi teks Indonesia agar cocok dengan spreadsheet
             let tglPencarianCSV = formatKeCSV(selectedDateVal);
-
             let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPencarianCSV);
             let jadwalPerStudio = {};
 
-            // Bersihkan tampilan sebelumnya
             $('#areaStudio').empty();
             $('#peringatanBentrokUtama').addClass('d-none');
             $('#peringatanKosong').addClass('d-none');
@@ -143,7 +236,7 @@
                 return;
             }
 
-            // Kelompokkan jadwal berdasarkan Studio
+            // Kelompokkan jadwal per Studio
             dataHariIni.forEach(row => {
                 let namaStudio = row['STUDIO'] ? row['STUDIO'].trim() : 'Studio Tidak Disebutkan';
                 if(!jadwalPerStudio[namaStudio]) { jadwalPerStudio[namaStudio] = []; }
@@ -157,7 +250,6 @@
             Object.keys(jadwalPerStudio).sort().forEach(studio => {
                 let sesiStudio = jadwalPerStudio[studio];
                 
-                // Urutkan jadwal dari pagi ke sore otomatis
                 sesiStudio.sort((a, b) => {
                     let wA = parseWaktuToMinutes(a['WAKTU'] || "");
                     let wB = parseWaktuToMinutes(b['WAKTU'] || "");
@@ -167,7 +259,6 @@
                 let htmlSesi = "";
                 let endSebelumnya = 0;
 
-                // Proses deteksi bentrok
                 sesiStudio.forEach((sesi) => {
                     let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                     let isBentrok = false;
@@ -182,24 +273,27 @@
 
                     htmlSesi += `
                         <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <strong><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</strong>
-                                <span class="badge bg-secondary">${sesi['KELAS'] || '-'}</span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="waktu-teks"><i class="far fa-clock me-1 text-primary"></i> ${sesi['WAKTU'] || '-'}</span>
+                                <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
                             </div>
-                            <div class="fw-bold text-primary">${sesi['MAPEL'] || '-'}</div>
-                            <div class="text-muted small">
-                                <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
-                                <i class="fas fa-headset me-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
+                            <div class="mapel-teks">${sesi['MAPEL'] || '-'}</div>
+                            <div class="pengajar-teks d-flex flex-column gap-1 mt-2">
+                                <span><i class="fas fa-user-tie text-secondary me-2"></i> ${sesi['PENGAJAR'] || '-'}</span>
+                                <span><i class="fas fa-headset text-secondary me-2"></i> OP: ${sesi['OP ZOOM'] || '-'}</span>
                             </div>
-                            ${isBentrok ? '<div class="text-danger small fw-bold mt-1"><i class="fas fa-times-circle me-1"></i> Bentrok Waktu!</div>' : ''}
+                            ${isBentrok ? '<div class="text-danger mt-2 px-2 py-1 bg-danger bg-opacity-10 rounded-2 text-center' + 
+                            ' fw-bold" style="font-size:0.8rem;"><i class="fas fa-times-circle me-1"></i> Bentrok Waktu!</div>' : ''}
                         </div>
                     `;
                 });
 
                 htmlStudio += `
                     <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card studio-card p-3">
-                            <h5 class="text-center mb-3 text-uppercase border-bottom pb-2">${studio}</h5>
+                        <div class="studio-card">
+                            <div class="studio-header text-uppercase">
+                                <i class="fas fa-video me-2 text-primary"></i>${studio}
+                            </div>
                             <div class="sesi-container">
                                 ${htmlSesi}
                             </div>
@@ -209,7 +303,6 @@
             });
 
             $('#areaStudio').html(htmlStudio);
-
             if (adaBentrokGlobal) { $('#peringatanBentrokUtama').removeClass('d-none'); }
         });
     </script>
