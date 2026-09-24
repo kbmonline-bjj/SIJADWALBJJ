@@ -28,18 +28,17 @@
     <div class="container-fluid px-4">
         
         <!-- ======================= -->
-        <!-- FILTER TANGGAL -->
+        <!-- FILTER TANGGAL (KALENDER) -->
         <!-- ======================= -->
         <div class="card p-4 mb-4">
             <div class="row align-items-center">
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <h5 class="mb-0"><i class="fas fa-search me-2"></i>Cek Ketersediaan Studio</h5>
-                    <p class="text-muted small mb-0 mt-1">Pilih tanggal untuk melihat jadwal per studio dan deteksi bentrok.</p>
+                    <p class="text-muted small mb-0 mt-1">Klik ikon kalender di samping untuk memilih tanggal.</p>
                 </div>
                 <div class="col-md-4 mt-3 mt-md-0">
-                    <select id="pilihTanggal" class="form-select form-select-lg">
-                        <option value="">Memuat tanggal...</option>
-                    </select>
+                    <!-- Elemen diubah menjadi Input Date (Kalender) -->
+                    <input type="date" id="pilihTanggal" class="form-control form-control-lg">
                 </div>
             </div>
         </div>
@@ -47,8 +46,16 @@
         <!-- ======================= -->
         <!-- AREA STUDIO (OTOMATIS) -->
         <!-- ======================= -->
-        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold">
-            <i class="fas fa-exclamation-triangle me-2"></i> PERHATIAN: Ditemukan jadwal yang bentrok pada tanggal ini!
+        
+        <!-- Judul Dinamis Hari yang Dipilih -->
+        <h4 id="judulTanggal" class="mb-4 text-primary d-none"><i class="fas fa-calendar-day me-2"></i>Jadwal: <span id="teksTanggal"></span></h4>
+
+        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold mb-4">
+            <i class="fas fa-exclamation-triangle me-2"></i> PERHATIAN: Ditemukan jadwal yang bentrok (waktu tumpang tindih) pada tanggal ini!
+        </div>
+
+        <div id="peringatanKosong" class="alert alert-warning d-none mb-4">
+            <i class="fas fa-info-circle me-2"></i> Tidak ada jadwal yang tercatat untuk tanggal tersebut.
         </div>
 
         <div class="row mb-5" id="areaStudio">
@@ -78,35 +85,58 @@
             return null;
         }
 
+        // Fungsi mengubah format YYYY-MM-DD dari Kalender menjadi "Rabu, 10 Juni 2026"
+        function formatTanggalIndo(dateString) {
+            if(!dateString) return "";
+            const parts = dateString.split('-'); 
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; 
+            const day = parseInt(parts[2], 10);
+            
+            const d = new Date(year, month, day);
+            const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            
+            let namaHariStr = namaHari[d.getDay()];
+            let tanggalStr = day < 10 ? '0' + day : day.toString();
+            let bulanStr = namaBulan[month];
+            
+            return `${namaHariStr}, ${tanggalStr} ${bulanStr} ${year}`;
+        }
+
         Papa.parse(sheetUrl, {
             download: true,
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
                 globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
-                
-                // Ambil daftar tanggal unik dari data untuk dropdown
-                let tanggalUnik = [...new Set(globalData.map(item => item['Hari Tanggal']))];
-                let opsiTanggal = '<option value="">-- Pilih Tanggal --</option>';
-                tanggalUnik.forEach(tgl => {
-                    opsiTanggal += `<option value="${tgl}">${tgl}</option>`;
-                });
-                $('#pilihTanggal').html(opsiTanggal);
-
-                // Jika ada data, otomatis pilih tanggal pertama di data atau tanggal hari ini
-                if(tanggalUnik.length > 0) {
-                    $('#pilihTanggal').val(tanggalUnik[0]).change();
-                }
             }
         });
 
-        // Saat dropdown tanggal diganti
+        // Saat kalender tanggal dipilih
         $('#pilihTanggal').on('change', function() {
-            let tglPilihan = $(this).val();
-            if(!tglPilihan) return;
+            let tglMentah = $(this).val(); // Format: 2026-06-10
+            if(!tglMentah) return;
+
+            // Terjemahkan ke format CSV
+            let tglPilihan = formatTanggalIndo(tglMentah);
+            
+            // Tampilkan judul tanggal di atas studio
+            $('#judulTanggal').removeClass('d-none');
+            $('#teksTanggal').text(tglPilihan);
 
             let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPilihan);
             let jadwalPerStudio = {};
+
+            // Reset Peringatan
+            $('#peringatanBentrokUtama').addClass('d-none');
+            $('#peringatanKosong').addClass('d-none');
+            $('#areaStudio').html('');
+
+            if (dataHariIni.length === 0) {
+                $('#peringatanKosong').removeClass('d-none');
+                return;
+            }
 
             // Kelompokkan jadwal berdasarkan Studio
             dataHariIni.forEach(row => {
@@ -124,7 +154,6 @@
             Object.keys(jadwalPerStudio).sort().forEach(studio => {
                 let sesiStudio = jadwalPerStudio[studio];
                 
-                // Urutkan sesi berdasarkan jam mulai
                 sesiStudio.sort((a, b) => {
                     let wA = parseWaktuToMinutes(a['WAKTU'] || "");
                     let wB = parseWaktuToMinutes(b['WAKTU'] || "");
@@ -134,24 +163,20 @@
                 let htmlSesi = "";
                 let endSebelumnya = 0;
 
-                // Proses pengecekan bentrok tiap sesi
                 sesiStudio.forEach((sesi, index) => {
                     let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                     let isBentrok = false;
 
                     if (waktuParsed) {
-                        // Jika jam mulai sesi ini KURANG DARI jam selesai sesi sebelumnya = BENTROK
                         if (waktuParsed.start < endSebelumnya) {
                             isBentrok = true;
                             adaBentrokGlobal = true;
                         }
-                        // Update batas akhir waktu untuk dibandingkan dengan sesi selanjutnya
                         if (waktuParsed.end > endSebelumnya) {
                             endSebelumnya = waktuParsed.end;
                         }
                     }
 
-                    // Tampilan item sesi
                     htmlSesi += `
                         <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
                             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -168,7 +193,6 @@
                     `;
                 });
 
-                // Bungkus dalam kartu Studio
                 htmlStudio += `
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card studio-card p-3">
@@ -183,11 +207,8 @@
 
             $('#areaStudio').html(htmlStudio);
 
-            // Tampilkan atau sembunyikan peringatan bentrok utama
             if (adaBentrokGlobal) {
                 $('#peringatanBentrokUtama').removeClass('d-none');
-            } else {
-                $('#peringatanBentrokUtama').addClass('d-none');
             }
         });
     </script>
