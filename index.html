@@ -14,10 +14,8 @@
         .navbar-modern { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
         .navbar-brand { color: #0f172a !important; font-weight: 700; font-size: 1.4rem; }
 
-        /* Desain Tab Modern */
         .nav-pills .nav-link { color: #64748b; font-weight: 600; border-radius: 12px; padding: 0.8rem 1.5rem; margin-right: 0.5rem; transition: all 0.3s; }
         .nav-pills .nav-link.active { background-color: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-        .nav-pills .nav-link:hover:not(.active) { background-color: #e2e8f0; color: #1e293b; }
 
         .header-section {
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
@@ -25,39 +23,38 @@
             box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.3);
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
         }
-        
-        .header-rekapan {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
+        .header-rekapan { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 
         .form-control-modern {
             border-radius: 16px; border: 2px solid transparent; padding: 0.9rem 1.2rem; font-weight: 600;
-            color: #1e293b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: all 0.3s; cursor: pointer;
+            color: #1e293b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); cursor: pointer;
         }
-        .form-control-modern:focus { border-color: #93c5fd; outline: none; box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4); }
-
-        /* Style Kartu Jadwal Harian */
-        .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; }
         .group-header { background: #f8fafc; padding: 1rem; text-align: center; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 1.1rem; }
         .sesi-container { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.8rem; }
         .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; }
-        .bentrok-alert { border-color: #fecaca; background: #fff5f5; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
+        .bentrok-alert { border-color: #fecaca; background: #fff5f5; }
         .badge-soft { background: #e0e7ff; color: #4f46e5; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem;}
-        
-        .mapel-teks { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0.4rem 0; }
-        .info-teks { font-size: 0.85rem; color: #64748b; font-weight: 500;}
 
-        /* Toggle Mode Harian */
         .mode-toggle { background: rgba(255,255,255,0.2); border-radius: 12px; padding: 0.3rem; display: inline-flex; }
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        /* Style Kartu Rekapan Mapel */
-        .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .mapel-header { background: #f8fafc; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 0.75rem;}
-        .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;}
-        .mapel-table td { vertical-align: middle; padding: 1rem 1.5rem; font-size: 0.95rem; border-bottom: 1px solid #e2e8f0;}
-        .mapel-table tr:last-child td { border-bottom: none; }
+        /* Style Baru Untuk Mapel Card (Lebih Ringkas & 2 Kolom) */
+        .cursor-pointer { cursor: pointer; }
+        .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; }
+        .mapel-card:hover { border-color: #cbd5e1; }
+        .mapel-header { background: #f8fafc; padding: 1rem 1.2rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; transition: 0.2s; }
+        .mapel-header:hover { background: #f1f5f9; }
+        
+        /* Modifikasi ukuran font tabel agar ringkas */
+        .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 0.5rem 0.8rem; }
+        .mapel-table td { padding: 0.6rem 0.8rem; font-size: 0.8rem; vertical-align: middle; }
+        
+        /* Transisi Icon Collapse */
+        .collapse-icon { transition: transform 0.3s ease; }
+        .collapsed .collapse-icon { transform: rotate(-90deg); }
     </style>
 </head>
 <body>
@@ -105,20 +102,15 @@
                 <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold shadow-sm rounded-4 border-0 mb-4 py-3">
                     <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Studio digunakan bersamaan)!
                 </div>
-                <div id="peringatanKosong" class="alert alert-light d-none shadow-sm rounded-4 border mb-4 py-4 text-center">
-                    <img src="https://cdn-icons-png.flaticon.com/512/7486/7486747.png" alt="Kosong" width="80" class="mb-3 opacity-50">
-                    <h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5>
-                    <p class="text-muted mb-0">Belum ada kelas atau kegiatan yang dijadwalkan pada tanggal ini.</p>
-                </div>
                 <div class="row" id="areaTampilan"></div>
             </div>
 
-            <!-- MENU 2: REKAPAN KELAS (BARU) -->
+            <!-- MENU 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
                 <div class="header-section header-rekapan mt-0">
                     <div>
                         <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Progress & Rekapan Kelas</h2>
-                        <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Pilih kelas untuk melihat riwayat materi per Mata Pelajaran.</p>
+                        <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Pilih kelas, lalu klik pada kartu mapel untuk membuka detail materinya.</p>
                     </div>
                     <div style="min-width: 280px;">
                         <select id="pilihKelas" class="form-select form-control-modern w-100 text-primary">
@@ -127,15 +119,13 @@
                     </div>
                 </div>
 
-                <!-- Area Kosong Rekapan -->
                 <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
                     <i class="fas fa-hand-pointer fs-1 text-muted mb-3 opacity-50"></i>
                     <h5 class="fw-bold text-muted">Silakan Pilih Kelas</h5>
-                    <p class="text-muted mb-0">Data akan dikelompokkan berdasarkan Mata Pelajaran secara otomatis.</p>
                 </div>
 
-                <!-- Area Hasil Filter Rekapan Kelas -->
-                <div id="areaRekapanKelas">
+                <!-- Area Hasil Filter Rekapan (Akan diisi 2 Kolom) -->
+                <div id="areaRekapanKelas" class="row">
                     <!-- Kartu-kartu mapel akan di-generate oleh JS di sini -->
                 </div>
             </div>
@@ -156,11 +146,26 @@
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
+        // Konversi format (YYYY-MM-DD) -> (Rabu, 10 Juni 2026)
         function formatKeCSV(dateStr) {
             if(!dateStr) return "";
             let [y, m, d] = dateStr.split('-');
             const tgl = new Date(y, m - 1, d);
             return `${namaHari[tgl.getDay()]}, ${d} ${namaBulan[tgl.getMonth()]} ${y}`;
+        }
+
+        // Pengurai Format Tanggal CSV (Rabu, 10 Juni 2026) menjadi Objek Date Javascript untuk deteksi hari
+        function parseDateFromCSV(csvDateStr) {
+            if(!csvDateStr) return null;
+            let parts = csvDateStr.split(','); 
+            if(parts.length < 2) return null;
+            let dateParts = parts[1].trim().split(' ');
+            if(dateParts.length < 3) return null;
+            
+            let day = parseInt(dateParts[0]);
+            let month = namaBulan.indexOf(dateParts[1]);
+            let year = parseInt(dateParts[2]);
+            return new Date(year, month, day);
         }
 
         function parseWaktuToMinutes(waktuStr) {
@@ -178,7 +183,6 @@
         }
 
         $(document).ready(function() {
-            // Set Tanggal Hari Ini
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
             $('#pilihTanggal').val(todayFormatted);
@@ -190,25 +194,20 @@
                 complete: function(results) {
                     globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
                     
-                    // ==========================================
-                    // 1. INISIALISASI DROPDOWN KELAS
-                    // ==========================================
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
-                    // Buang yang kosong, lalu urutkan sesuai abjad
                     kelasUnik = kelasUnik.filter(k => k !== '').sort();
                     
                     let opsiKelas = '<option value="">-- Pilih Kelas --</option>';
                     kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
                     $('#pilihKelas').html(opsiKelas);
 
-                    // Trigger render Pantauan Harian
                     $('#pilihTanggal').change();
                 }
             });
         });
 
         // ==========================================
-        // LOGIKA MENU 2: REKAPAN KELAS KETIKA DROPDOWN DIPILIH
+        // LOGIKA MENU REKAPAN KELAS (2 Kolom + Indikator Tanggal + Collapse)
         // ==========================================
         $('#pilihKelas').on('change', function() {
             let selectedKelas = $(this).val();
@@ -221,69 +220,101 @@
                 pesanAwal.removeClass('d-none');
                 return;
             }
-            
             pesanAwal.addClass('d-none');
 
-            // 1. Filter data yang hanya sesuai dengan kelas yang dipilih
             let dataKelasIni = globalData.filter(row => row['KELAS'] && row['KELAS'].trim() === selectedKelas);
 
-            // 2. Kelompokkan berdasarkan MAPEL
             let mapelGroup = {};
             dataKelasIni.forEach(row => {
-                let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Lain-lain / Tanpa Mapel';
+                let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Tanpa Mapel';
                 if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
                 mapelGroup[mapel].push(row);
             });
 
-            // 3. Render HTML Per Mapel
             let htmlOutput = "";
+            let mapelIndex = 0; // Untuk ID unik collapse
+            
+            // Atur waktu hari ini jam 00:00 untuk perbandingan tanggal
+            let todayObj = new Date();
+            todayObj.setHours(0,0,0,0);
             
             Object.keys(mapelGroup).sort().forEach(mapel => {
                 let riwayat = mapelGroup[mapel];
-                
                 let tbodyHtml = "";
+                
                 riwayat.forEach(sesi => {
+                    let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                    let statusBadge = "";
+                    let rowClass = "";
+                    
+                    // Logika pewarnaan status tanggal
+                    if (dateObj) {
+                        dateObj.setHours(0,0,0,0);
+                        if (dateObj < todayObj) {
+                            // Sudah lewat
+                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.65rem;">Selesai</span>';
+                            rowClass = "text-muted opacity-75";
+                        } else if (dateObj.getTime() === todayObj.getTime()) {
+                            // Hari ini
+                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.65rem;">Hari Ini</span>';
+                            rowClass = "table-success text-dark";
+                        } else {
+                            // Belum terjadi
+                            statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.65rem;">Mendatang</span>';
+                        }
+                    }
+
                     tbodyHtml += `
-                        <tr>
+                        <tr class="${rowClass}">
                             <td>
-                                <div class="fw-bold text-dark">${sesi['Hari Tanggal'] || '-'}</div>
+                                <div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>
+                                ${statusBadge}
                             </td>
-                            <td>
-                                <span class="badge bg-light text-primary border border-primary-subtle py-2 px-3"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-dark">${sesi['MATERI YANG DIBAHAS'] || '<span class="text-muted fw-normal fst-italic">Materi belum diisi</span>'}</div>
-                            </td>
-                            <td>
-                                <i class="fas fa-user-tie text-muted me-2"></i>${sesi['PENGAJAR'] || '-'}
-                            </td>
+                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
+                            <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
                         </tr>
                     `;
                 });
 
+                // Bungkus dalam kolom grid Bootstrap (col-md-6) agar menjadi 2 kolom
                 htmlOutput += `
-                    <div class="mapel-card">
-                        <div class="mapel-header">
-                            <i class="fas fa-book text-success"></i> ${mapel}
-                            <span class="badge bg-secondary ms-auto rounded-pill">${riwayat.length} Sesi</span>
-                        </div>
-                        <div class="table-responsive mb-0">
-                            <table class="table mapel-table mb-0 table-hover">
-                                <thead>
-                                    <tr>
-                                        <th style="min-width: 180px;">Hari Tanggal</th>
-                                        <th style="min-width: 150px;">Jam</th>
-                                        <th style="min-width: 250px;">Materi Yang Dibahas</th>
-                                        <th style="min-width: 150px;">Pengajar</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tbodyHtml}
-                                </tbody>
-                            </table>
+                    <div class="col-md-6 mb-3">
+                        <div class="mapel-card">
+                            <!-- Header yg bisa di-klik untuk buka/tutup tabel (collapsed by default) -->
+                            <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseMapel${mapelIndex}">
+                                <div class="d-flex align-items-center w-100">
+                                    <i class="fas fa-book text-success me-2"></i> 
+                                    <span class="text-truncate fw-bold" style="max-width: 65%; font-size: 0.95rem;">${mapel}</span>
+                                    <div class="ms-auto d-flex align-items-center">
+                                        <span class="badge bg-secondary rounded-pill me-3" style="font-size: 0.7rem;">${riwayat.length} Sesi</span>
+                                        <i class="fas fa-chevron-down text-muted collapse-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Area Sembunyi (Detail Tabel) -->
+                            <div id="collapseMapel${mapelIndex}" class="collapse">
+                                <div class="table-responsive mb-0" style="max-height: 280px; overflow-y: auto;">
+                                    <table class="table mapel-table mb-0 table-hover table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 25%;">Tanggal</th>
+                                                <th style="width: 20%;">Jam</th>
+                                                <th style="width: 35%;">Materi</th>
+                                                <th style="width: 20%;">Pengajar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tbodyHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
+                mapelIndex++;
             });
 
             areaRekapan.html(htmlOutput);
@@ -295,18 +326,10 @@
         $('#pilihTanggal').on('change', function() {
             let selectedDateVal = $(this).val(); 
             if(!selectedDateVal) return;
-
             let tglPencarianCSV = formatKeCSV(selectedDateVal);
             let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPencarianCSV);
-
             $('#areaTampilan').empty();
             $('#peringatanBentrokUtama').addClass('d-none');
-            $('#peringatanKosong').addClass('d-none');
-
-            if(dataHariIni.length === 0) {
-                $('#peringatanKosong').removeClass('d-none');
-                return;
-            }
 
             let htmlOutput = "";
             let adaBentrokGlobal = false;
@@ -338,11 +361,11 @@
                         htmlSesi += `
                             <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="info-teks text-primary fw-bold"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
+                                    <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
                                     <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
                                 </div>
-                                <div class="mapel-teks">${sesi['MAPEL'] || '-'}</div>
-                                <div class="info-teks">
+                                <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
+                                <div style="font-size:0.8rem; color:#64748b;">
                                     <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
                                     <i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
                                 </div>
@@ -384,11 +407,11 @@
                         htmlSesi += `
                             <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="info-teks text-primary fw-bold"><i class="fas fa-video me-1"></i> ${studio}</span>
+                                    <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span>
                                     <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
                                 </div>
-                                <div class="mapel-teks">${sesi['MAPEL'] || '-'}</div>
-                                <div class="info-teks">
+                                <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
+                                <div style="font-size:0.8rem; color:#64748b;">
                                     <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
                                     <i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
                                 </div>
