@@ -33,8 +33,22 @@
         .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; }
         .group-header { background: #f8fafc; padding: 1rem; text-align: center; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 1.1rem; }
         .sesi-container { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.8rem; }
-        .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; }
-        .bentrok-alert { border-color: #fecaca; background: #fff5f5; }
+        
+        .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; transition: 0.3s; border-left: 4px solid #4f46e5;}
+        .bentrok-alert { border-color: #fecaca !important; background: #fff5f5; border-left: 4px solid #ef4444 !important;}
+        
+        /* Gaya Status Live & Selesai */
+        @keyframes pulse-live {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .item-live { border-left-color: #ef4444 !important; background-color: #fef2f2 !important; border-color: #fecaca; }
+        .badge-live { animation: pulse-live 2s infinite; background-color: #ef4444; color: white; border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center;}
+        
+        .item-selesai { opacity: 0.65; border-left-color: #cbd5e1 !important; background-color: #f8fafc; }
+        .badge-selesai { background-color: #94a3b8; color: white; border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center;}
+        
         .badge-soft { background: #e0e7ff; color: #4f46e5; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem;}
 
         .mode-toggle { background: rgba(255,255,255,0.2); border-radius: 12px; padding: 0.3rem; display: inline-flex; }
@@ -46,7 +60,6 @@
         .mapel-card:hover { border-color: #cbd5e1; }
         .mapel-header { background: #f8fafc; padding: 0.9rem 1.1rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; transition: 0.2s; }
         .mapel-header:hover { background: #f1f5f9; }
-        
         .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 0.4rem 0.6rem; letter-spacing: 0.3px;}
         .mapel-table td { padding: 0.5rem 0.6rem; font-size: 0.75rem; vertical-align: middle; }
         
@@ -116,13 +129,10 @@
                         </select>
                     </div>
                 </div>
-
                 <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
                     <i class="fas fa-hand-pointer fs-1 text-muted mb-3 opacity-50"></i>
                     <h5 class="fw-bold text-muted">Silakan Pilih Kelas</h5>
                 </div>
-
-                <!-- Area Hasil Filter Rekapan (3 Kolom) -->
                 <div id="areaRekapanKelas" class="row"></div>
             </div>
 
@@ -137,7 +147,7 @@
     <script>
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
-        let daftarSemuaStudio = []; // Menyimpan semua nama studio yang ada di CSV
+        let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
 
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -156,7 +166,6 @@
             if(parts.length < 2) return null;
             let dateParts = parts[1].trim().split(' ');
             if(dateParts.length < 3) return null;
-            
             let day = parseInt(dateParts[0]);
             let month = namaBulan.indexOf(dateParts[1]);
             let year = parseInt(dateParts[2]);
@@ -189,12 +198,9 @@
                 complete: function(results) {
                     globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
                     
-                    // Ekstrak Semua Daftar Studio
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
-                    // Bersihkan dari data kosong atau teks yang bukan studio
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Ekstrak Daftar Kelas
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
                     kelasUnik = kelasUnik.filter(k => k !== '').sort();
                     let opsiKelas = '<option value="">-- Pilih Kelas --</option>';
@@ -237,33 +243,24 @@
                 
                 riwayat.forEach(sesi => {
                     let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
-                    let statusBadge = "";
-                    let rowClass = "";
-                    
+                    let statusBadge = ""; let rowClass = "";
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
                         if (dateObj < todayObj) {
-                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>';
-                            rowClass = "text-muted opacity-75";
+                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75";
                         } else if (dateObj.getTime() === todayObj.getTime()) {
-                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>';
-                            rowClass = "table-success text-dark";
+                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark";
                         } else {
                             statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>';
                         }
                     }
 
-                    tbodyHtml += `
-                        <tr class="${rowClass}">
-                            <td>
-                                <div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>
-                                ${statusBadge}
-                            </td>
-                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
-                            <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
-                        </tr>
-                    `;
+                    tbodyHtml += `<tr class="${rowClass}">
+                        <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
+                        <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
+                        <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
+                    </tr>`;
                 });
 
                 htmlOutput += `
@@ -271,27 +268,13 @@
                         <div class="mapel-card">
                             <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseMapel${mapelIndex}">
                                 <div class="d-flex align-items-center w-100">
-                                    <i class="fas fa-book text-success me-2"></i> 
-                                    <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
-                                    <div class="ms-auto d-flex align-items-center">
-                                        <span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span>
-                                        <i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i>
-                                    </div>
+                                    <i class="fas fa-book text-success me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
+                                    <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
                                 </div>
                             </div>
                             <div id="collapseMapel${mapelIndex}" class="collapse">
                                 <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;">
-                                    <table class="table mapel-table mb-0 table-hover table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 25%;">Tanggal</th>
-                                                <th style="width: 20%;">Jam</th>
-                                                <th style="width: 35%;">Materi</th>
-                                                <th style="width: 20%;">Pengajar</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>${tbodyHtml}</tbody>
-                                    </table>
+                                    <table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table>
                                 </div>
                             </div>
                         </div>
@@ -308,10 +291,18 @@
         $('#pilihTanggal').on('change', function() {
             let selectedDateVal = $(this).val(); 
             if(!selectedDateVal) return;
+            
             let tglPencarianCSV = formatKeCSV(selectedDateVal);
             let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPencarianCSV);
+            
             $('#areaTampilan').empty();
             $('#peringatanBentrokUtama').addClass('d-none');
+
+            // Persiapan Waktu Saat Ini Untuk Deteksi Live / Selesai
+            let tzOffset = (new Date()).getTimezoneOffset() * 60000;
+            let todayRealStr = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
+            let now = new Date();
+            let currentMinutes = now.getHours() * 60 + now.getMinutes();
 
             let htmlOutput = "";
             let adaBentrokGlobal = false;
@@ -335,15 +326,32 @@
                     sesiStudio.forEach((sesi) => {
                         let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                         let isBentrok = false;
+                        
+                        // Deteksi Bentrok
                         if (waktuParsed) {
                             if (waktuParsed.start < endSebelumnya) { isBentrok = true; adaBentrokGlobal = true; }
                             if (waktuParsed.end > endSebelumnya) endSebelumnya = waktuParsed.end;
                         }
 
+                        // Deteksi Status Waktu (Live/Selesai)
+                        let statusHtml = ""; let itemClass = "";
+                        if (selectedDateVal < todayRealStr) {
+                            statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai";
+                        } else if (selectedDateVal === todayRealStr && waktuParsed) {
+                            if (currentMinutes > waktuParsed.end) {
+                                statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai";
+                            } else if (currentMinutes >= waktuParsed.start && currentMinutes <= waktuParsed.end) {
+                                statusHtml = '<span class="badge-live ms-2"><i class="fas fa-broadcast-tower me-1"></i>LIVE</span>'; itemClass = "item-live";
+                            }
+                        }
+
                         htmlSesi += `
-                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
+                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
+                                        ${statusHtml}
+                                    </div>
                                     <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
                                 </div>
                                 <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
@@ -375,12 +383,26 @@
                     let sesiJam = jadwalPerJam[jam];
                     let htmlSesi = "";
                     let studioDigunakan = new Set(); 
+                    
+                    // Deteksi Status Grup Jam
+                    let waktuJamGroup = parseWaktuToMinutes(jam);
+                    let statusGrupHtml = "";
+                    let isGrupSelesai = false;
+                    
+                    if (selectedDateVal < todayRealStr) {
+                        statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true;
+                    } else if (selectedDateVal === todayRealStr && waktuJamGroup) {
+                        if (currentMinutes > waktuJamGroup.end) {
+                            statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true;
+                        } else if (currentMinutes >= waktuJamGroup.start && currentMinutes <= waktuJamGroup.end) {
+                            statusGrupHtml = '<span class="badge-live float-end"><i class="fas fa-broadcast-tower"></i></span>';
+                        }
+                    }
 
                     sesiJam.forEach((sesi) => {
                         let studio = sesi['STUDIO'] ? sesi['STUDIO'].trim() : '-';
                         let isBentrok = false;
                         
-                        // Tandai studio yang terpakai
                         if(studio !== '-' && studio !== '') {
                             if(studioDigunakan.has(studio)) {
                                 isBentrok = true; adaBentrokGlobal = true;
@@ -388,9 +410,11 @@
                                 studioDigunakan.add(studio);
                             }
                         }
+                        
+                        let itemClass = isGrupSelesai ? "item-selesai" : "";
 
                         htmlSesi += `
-                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''}">
+                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span>
                                     <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
@@ -404,32 +428,16 @@
                         `;
                     });
 
-                    // Cek Studio yang belum dipakai
                     let studioTersisa = daftarSemuaStudio.filter(s => !studioDigunakan.has(s));
                     let htmlStudioKosong = "";
                     
                     if(studioTersisa.length > 0) {
-                        htmlStudioKosong = `
-                            <div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25">
-                                <div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;">
-                                    <i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:
-                                </div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}
-                                </div>
-                            </div>
-                        `;
+                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</div><div class="d-flex flex-wrap gap-1">${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}</div></div>`;
                     } else {
-                        htmlStudioKosong = `
-                            <div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25">
-                                <div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2">
-                                    <i class="fas fa-times-circle me-1"></i> Semua Studio Penuh
-                                </div>
-                            </div>
-                        `;
+                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Penuh</div></div>`;
                     }
 
-                    htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header"><i class="far fa-clock me-2 text-primary"></i>Sesi: ${jam}</div><div class="sesi-container">${htmlSesi} ${htmlStudioKosong}</div></div></div>`;
+                    htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header"><i class="far fa-clock me-2 text-primary"></i>Sesi: ${jam} ${statusGrupHtml}</div><div class="sesi-container">${htmlSesi} ${htmlStudioKosong}</div></div></div>`;
                 });
             }
 
