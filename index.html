@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Informasi Pantauan Jadwal Neutron</title>
-    <!-- Bootstrap 5 & DataTables CSS -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -26,6 +25,10 @@
             box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.3);
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
         }
+        
+        .header-rekapan {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
 
         .form-control-modern {
             border-radius: 16px; border: 2px solid transparent; padding: 0.9rem 1.2rem; font-weight: 600;
@@ -33,13 +36,14 @@
         }
         .form-control-modern:focus { border-color: #93c5fd; outline: none; box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4); }
 
-        /* Style Kartu Jadwal */
+        /* Style Kartu Jadwal Harian */
         .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; overflow: hidden; }
         .group-header { background: #f8fafc; padding: 1rem; text-align: center; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 1.1rem; }
         .sesi-container { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.8rem; }
         .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; }
         .bentrok-alert { border-color: #fecaca; background: #fff5f5; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
         .badge-soft { background: #e0e7ff; color: #4f46e5; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem;}
+        
         .mapel-teks { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0.4rem 0; }
         .info-teks { font-size: 0.85rem; color: #64748b; font-weight: 500;}
 
@@ -48,9 +52,12 @@
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        /* Tabel Rekapan */
-        .card-table { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); padding: 2rem; }
-        table.dataTable tbody td { vertical-align: middle; }
+        /* Style Kartu Rekapan Mapel */
+        .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .mapel-header { background: #f8fafc; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 1.15rem; color: #0f172a; display: flex; align-items: center; gap: 0.75rem;}
+        .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;}
+        .mapel-table td { vertical-align: middle; padding: 1rem 1.5rem; font-size: 0.95rem; border-bottom: 1px solid #e2e8f0;}
+        .mapel-table tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -65,7 +72,6 @@
 
     <div class="container-fluid px-4 pb-5 mt-4">
         
-        <!-- Navigasi Menu (Tabs) -->
         <ul class="nav nav-pills mb-4" id="mainMenu" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="harian-tab" data-bs-toggle="pill" data-bs-target="#harian" type="button" role="tab">
@@ -74,28 +80,21 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="rekapan-tab" data-bs-toggle="pill" data-bs-target="#rekapan" type="button" role="tab">
-                    <i class="fas fa-table me-2"></i>Rekapan Kelas
+                    <i class="fas fa-book-open me-2"></i>Rekapan Per Kelas
                 </button>
             </li>
         </ul>
 
-        <!-- Konten Menu -->
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- ======================================= -->
-            <!-- MENU 1: PANTAUAN HARIAN (YANG SUDAH ADA)-->
-            <!-- ======================================= -->
+            <!-- MENU 1: PANTAUAN HARIAN -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div>
                         <h2 class="fw-bold mb-2"><i class="far fa-calendar-check me-2"></i>Jadwal Harian</h2>
                         <div class="mode-toggle mt-2">
-                            <button class="btn-mode active" id="btnModeStudio" onclick="ubahMode('studio')">
-                                <i class="fas fa-video me-2"></i>Berdasarkan Studio
-                            </button>
-                            <button class="btn-mode" id="btnModeJam" onclick="ubahMode('jam')">
-                                <i class="far fa-clock me-2"></i>Berdasarkan Jam
-                            </button>
+                            <button class="btn-mode active" id="btnModeStudio" onclick="ubahMode('studio')"><i class="fas fa-video me-2"></i>Berdasarkan Studio</button>
+                            <button class="btn-mode" id="btnModeJam" onclick="ubahMode('jam')"><i class="far fa-clock me-2"></i>Berdasarkan Jam</button>
                         </div>
                     </div>
                     <div style="min-width: 250px;">
@@ -114,31 +113,30 @@
                 <div class="row" id="areaTampilan"></div>
             </div>
 
-            <!-- ======================================= -->
-            <!-- MENU 2: REKAPAN KELAS LENGKAP (BARU)    -->
-            <!-- ======================================= -->
+            <!-- MENU 2: REKAPAN KELAS (BARU) -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
-                <div class="card-table">
-                    <h4 class="fw-bold mb-1"><i class="fas fa-clipboard-list me-2 text-primary"></i>Database Rekapan Kelas</h4>
-                    <p class="text-muted mb-4">Gunakan kotak pencarian untuk memfilter berdasarkan pengajar, materi, kelas, atau tanggal.</p>
-                    
-                    <div class="table-responsive">
-                        <table id="tabelDatabase" class="table table-hover table-striped w-100 align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Waktu</th>
-                                    <th>Kelas</th>
-                                    <th>Mapel / Materi</th>
-                                    <th>Pengajar</th>
-                                    <th>Studio</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelDatabaseBody">
-                                <!-- Data diisi oleh JavaScript -->
-                            </tbody>
-                        </table>
+                <div class="header-section header-rekapan mt-0">
+                    <div>
+                        <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Progress & Rekapan Kelas</h2>
+                        <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Pilih kelas untuk melihat riwayat materi per Mata Pelajaran.</p>
                     </div>
+                    <div style="min-width: 280px;">
+                        <select id="pilihKelas" class="form-select form-control-modern w-100 text-primary">
+                            <option value="">-- Pilih Kelas Dahulu --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Area Kosong Rekapan -->
+                <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
+                    <i class="fas fa-hand-pointer fs-1 text-muted mb-3 opacity-50"></i>
+                    <h5 class="fw-bold text-muted">Silakan Pilih Kelas</h5>
+                    <p class="text-muted mb-0">Data akan dikelompokkan berdasarkan Mata Pelajaran secara otomatis.</p>
+                </div>
+
+                <!-- Area Hasil Filter Rekapan Kelas -->
+                <div id="areaRekapanKelas">
+                    <!-- Kartu-kartu mapel akan di-generate oleh JS di sini -->
                 </div>
             </div>
 
@@ -148,8 +146,6 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script>
@@ -194,46 +190,108 @@
                 complete: function(results) {
                     globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
                     
-                    // 1. Trigger render Pantauan Harian
-                    $('#pilihTanggal').change();
+                    // ==========================================
+                    // 1. INISIALISASI DROPDOWN KELAS
+                    // ==========================================
+                    let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
+                    // Buang yang kosong, lalu urutkan sesuai abjad
+                    kelasUnik = kelasUnik.filter(k => k !== '').sort();
+                    
+                    let opsiKelas = '<option value="">-- Pilih Kelas --</option>';
+                    kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
+                    $('#pilihKelas').html(opsiKelas);
 
-                    // 2. Render Data untuk Menu Rekapan Kelas
-                    let htmlRekapan = "";
-                    globalData.forEach(row => {
-                        htmlRekapan += `
-                            <tr>
-                                <td class="fw-bold">${row['Hari Tanggal'] || '-'}</td>
-                                <td>${row['WAKTU'] || '-'}</td>
-                                <td><span class="badge bg-secondary">${row['KELAS'] || '-'}</span></td>
-                                <td class="text-primary fw-bold">${row['MAPEL'] || '-'}</td>
-                                <td><i class="fas fa-user-tie text-muted me-1"></i> ${row['PENGAJAR'] || '-'}</td>
-                                <td>${row['STUDIO'] || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    $('#tabelDatabaseBody').html(htmlRekapan);
-                    
-                    // Inisiasi DataTables dengan fitur pencarian & urutan otomatis
-                    $('#tabelDatabase').DataTable({
-                        "language": {
-                            "search": "Cari Data:",
-                            "lengthMenu": "Tampilkan _MENU_ baris",
-                            "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                            "paginate": { "previous": "Sebelumnya", "next": "Berikutnya" }
-                        },
-                        "order": [] // Jangan paksa urutkan agar urutan asli spreadsheet tetap terjaga
-                    });
+                    // Trigger render Pantauan Harian
+                    $('#pilihTanggal').change();
                 }
             });
         });
 
-        // Event ketika Pindah Tab, pastikan tabel render dengan lebar yang benar
-        $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
-            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+        // ==========================================
+        // LOGIKA MENU 2: REKAPAN KELAS KETIKA DROPDOWN DIPILIH
+        // ==========================================
+        $('#pilihKelas').on('change', function() {
+            let selectedKelas = $(this).val();
+            let areaRekapan = $('#areaRekapanKelas');
+            let pesanAwal = $('#pesanPilihKelas');
+
+            areaRekapan.empty();
+
+            if(!selectedKelas) {
+                pesanAwal.removeClass('d-none');
+                return;
+            }
+            
+            pesanAwal.addClass('d-none');
+
+            // 1. Filter data yang hanya sesuai dengan kelas yang dipilih
+            let dataKelasIni = globalData.filter(row => row['KELAS'] && row['KELAS'].trim() === selectedKelas);
+
+            // 2. Kelompokkan berdasarkan MAPEL
+            let mapelGroup = {};
+            dataKelasIni.forEach(row => {
+                let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Lain-lain / Tanpa Mapel';
+                if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
+                mapelGroup[mapel].push(row);
+            });
+
+            // 3. Render HTML Per Mapel
+            let htmlOutput = "";
+            
+            Object.keys(mapelGroup).sort().forEach(mapel => {
+                let riwayat = mapelGroup[mapel];
+                
+                let tbodyHtml = "";
+                riwayat.forEach(sesi => {
+                    tbodyHtml += `
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">${sesi['Hari Tanggal'] || '-'}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-primary border border-primary-subtle py-2 px-3"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">${sesi['MATERI YANG DIBAHAS'] || '<span class="text-muted fw-normal fst-italic">Materi belum diisi</span>'}</div>
+                            </td>
+                            <td>
+                                <i class="fas fa-user-tie text-muted me-2"></i>${sesi['PENGAJAR'] || '-'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                htmlOutput += `
+                    <div class="mapel-card">
+                        <div class="mapel-header">
+                            <i class="fas fa-book text-success"></i> ${mapel}
+                            <span class="badge bg-secondary ms-auto rounded-pill">${riwayat.length} Sesi</span>
+                        </div>
+                        <div class="table-responsive mb-0">
+                            <table class="table mapel-table mb-0 table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 180px;">Hari Tanggal</th>
+                                        <th style="min-width: 150px;">Jam</th>
+                                        <th style="min-width: 250px;">Materi Yang Dibahas</th>
+                                        <th style="min-width: 150px;">Pengajar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tbodyHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            areaRekapan.html(htmlOutput);
         });
 
-        // Logika Render Pantauan Harian
+        // ==========================================
+        // LOGIKA MENU 1: PANTAUAN HARIAN
+        // ==========================================
         $('#pilihTanggal').on('change', function() {
             let selectedDateVal = $(this).val(); 
             if(!selectedDateVal) return;
