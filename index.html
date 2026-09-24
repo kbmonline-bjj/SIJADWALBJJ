@@ -37,7 +37,6 @@
         .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; transition: 0.3s; border-left: 4px solid #4f46e5;}
         .bentrok-alert { border-color: #fecaca !important; background: #fff5f5; border-left: 4px solid #ef4444 !important;}
         
-        /* Gaya Status Live & Selesai */
         @keyframes pulse-live {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
@@ -95,7 +94,6 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- MENU 1: PANTAUAN HARIAN -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div>
@@ -111,12 +109,11 @@
                 </div>
 
                 <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold shadow-sm rounded-4 border-0 mb-4 py-3">
-                    <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Studio digunakan bersamaan)!
+                    <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Studio digunakan bersamaan pada waktu yang beririsan)!
                 </div>
                 <div class="row" id="areaTampilan"></div>
             </div>
 
-            <!-- MENU 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
                 <div class="header-section header-rekapan mt-0">
                     <div>
@@ -298,7 +295,6 @@
             $('#areaTampilan').empty();
             $('#peringatanBentrokUtama').addClass('d-none');
 
-            // Persiapan Waktu Saat Ini Untuk Deteksi Live / Selesai
             let tzOffset = (new Date()).getTimezoneOffset() * 60000;
             let todayRealStr = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
             let now = new Date();
@@ -327,13 +323,11 @@
                         let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                         let isBentrok = false;
                         
-                        // Deteksi Bentrok
                         if (waktuParsed) {
                             if (waktuParsed.start < endSebelumnya) { isBentrok = true; adaBentrokGlobal = true; }
                             if (waktuParsed.end > endSebelumnya) endSebelumnya = waktuParsed.end;
                         }
 
-                        // Deteksi Status Waktu (Live/Selesai)
                         let statusHtml = ""; let itemClass = "";
                         if (selectedDateVal < todayRealStr) {
                             statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai";
@@ -381,11 +375,25 @@
 
                 sortedJamKeys.forEach(jam => {
                     let sesiJam = jadwalPerJam[jam];
-                    let htmlSesi = "";
-                    let studioDigunakan = new Set(); 
-                    
-                    // Deteksi Status Grup Jam
                     let waktuJamGroup = parseWaktuToMinutes(jam);
+                    
+                    // CEK IRISAN WAKTU LINTAS KELOMPOK UNTUK DETEKSI STUDIO SIBUK
+                    let overlappingStudios = [];
+                    dataHariIni.forEach(allSesi => {
+                        let wLain = parseWaktuToMinutes(allSesi['WAKTU']);
+                        let stdLain = allSesi['STUDIO'] ? allSesi['STUDIO'].trim() : '-';
+                        if (wLain && waktuJamGroup && stdLain !== '-' && stdLain !== '') {
+                            // Cek rumus irisan waktu: Start A < End B DAN End A > Start B
+                            if (wLain.start < waktuJamGroup.end && wLain.end > waktuJamGroup.start) {
+                                overlappingStudios.push(stdLain);
+                            }
+                        }
+                    });
+
+                    // Hitung kemunculan studio pada waktu yang beririsan
+                    let studioCounts = {};
+                    overlappingStudios.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
+                    
                     let statusGrupHtml = "";
                     let isGrupSelesai = false;
                     
@@ -399,16 +407,15 @@
                         }
                     }
 
+                    let htmlSesi = "";
                     sesiJam.forEach((sesi) => {
                         let studio = sesi['STUDIO'] ? sesi['STUDIO'].trim() : '-';
                         let isBentrok = false;
                         
-                        if(studio !== '-' && studio !== '') {
-                            if(studioDigunakan.has(studio)) {
-                                isBentrok = true; adaBentrokGlobal = true;
-                            } else {
-                                studioDigunakan.add(studio);
-                            }
+                        // Deteksi bentrok jika studio ini muncul lebih dari 1 kali di menit yang sama hari itu
+                        if (studio !== '-' && studio !== '' && studioCounts[studio] > 1) {
+                            isBentrok = true;
+                            adaBentrokGlobal = true;
                         }
                         
                         let itemClass = isGrupSelesai ? "item-selesai" : "";
@@ -428,13 +435,14 @@
                         `;
                     });
 
-                    let studioTersisa = daftarSemuaStudio.filter(s => !studioDigunakan.has(s));
+                    // Menentukan studio tersisa dengan akurat berdasarkan irisan waktu
+                    let studioTersisa = daftarSemuaStudio.filter(s => !studioCounts[s]);
                     let htmlStudioKosong = "";
                     
                     if(studioTersisa.length > 0) {
                         htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</div><div class="d-flex flex-wrap gap-1">${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}</div></div>`;
                     } else {
-                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Penuh</div></div>`;
+                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Terpakai</div></div>`;
                     }
 
                     htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header"><i class="far fa-clock me-2 text-primary"></i>Sesi: ${jam} ${statusGrupHtml}</div><div class="sesi-container">${htmlSesi} ${htmlStudioKosong}</div></div></div>`;
