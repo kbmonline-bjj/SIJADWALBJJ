@@ -34,11 +34,11 @@
             <div class="row align-items-center">
                 <div class="col-md-5">
                     <h5 class="mb-0"><i class="fas fa-search me-2"></i>Cek Ketersediaan Studio</h5>
-                    <p class="text-muted small mb-0 mt-1">Klik ikon kalender di samping untuk memilih tanggal.</p>
+                    <p class="text-muted small mb-0 mt-1">Klik ikon kalender untuk memilih tanggal dan melihat jadwal studio.</p>
                 </div>
                 <div class="col-md-4 mt-3 mt-md-0">
-                    <!-- Elemen diubah menjadi Input Date (Kalender) -->
-                    <input type="date" id="pilihTanggal" class="form-control form-control-lg">
+                    <!-- Ini yang diubah menjadi input kalender -->
+                    <input type="date" id="pilihTanggal" class="form-control form-control-lg text-primary fw-bold cursor-pointer">
                 </div>
             </div>
         </div>
@@ -46,16 +46,12 @@
         <!-- ======================= -->
         <!-- AREA STUDIO (OTOMATIS) -->
         <!-- ======================= -->
-        
-        <!-- Judul Dinamis Hari yang Dipilih -->
-        <h4 id="judulTanggal" class="mb-4 text-primary d-none"><i class="fas fa-calendar-day me-2"></i>Jadwal: <span id="teksTanggal"></span></h4>
-
-        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold mb-4">
+        <div id="peringatanBentrokUtama" class="alert alert-danger d-none fw-bold shadow-sm">
             <i class="fas fa-exclamation-triangle me-2"></i> PERHATIAN: Ditemukan jadwal yang bentrok (waktu tumpang tindih) pada tanggal ini!
         </div>
 
-        <div id="peringatanKosong" class="alert alert-warning d-none mb-4">
-            <i class="fas fa-info-circle me-2"></i> Tidak ada jadwal yang tercatat untuk tanggal tersebut.
+        <div id="peringatanKosong" class="alert alert-info d-none shadow-sm">
+            <i class="fas fa-info-circle me-2"></i> Tidak ada jadwal yang terdaftar pada tanggal yang Anda pilih.
         </div>
 
         <div class="row mb-5" id="areaStudio">
@@ -72,36 +68,42 @@
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
 
-        // Fungsi mengubah teks waktu (13.00-13.30) menjadi angka menit untuk cek bentrok
+        // Konfigurasi Nama Hari & Bulan untuk konversi format Indonesia
+        const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+        // Konversi dari kalender (YYYY-MM-DD) ke format CSV (Rabu, 10 Juni 2026)
+        function formatKeCSV(dateStr) {
+            if(!dateStr) return "";
+            let [y, m, d] = dateStr.split('-');
+            const tgl = new Date(y, m - 1, d);
+            let hari = namaHari[tgl.getDay()];
+            let bulan = namaBulan[tgl.getMonth()];
+            return `${hari}, ${d} ${bulan} ${y}`;
+        }
+
+        // Konversi dari format CSV (Rabu, 10 Juni 2026) ke kalender (YYYY-MM-DD)
+        function formatDariCSV(csvDateStr) {
+            let parts = csvDateStr.split(','); 
+            if(parts.length < 2) return "";
+            let dateParts = parts[1].trim().split(' ');
+            let d = dateParts[0].padStart(2, '0');
+            let mIndex = namaBulan.indexOf(dateParts[1]) + 1;
+            let m = mIndex.toString().padStart(2, '0');
+            let y = dateParts[2];
+            return `${y}-${m}-${d}`;
+        }
+
+        // Fungsi mengubah teks waktu (13.00-13.30) menjadi menit untuk deteksi bentrok
         function parseWaktuToMinutes(waktuStr) {
             let match = waktuStr.match(/(\d{1,2})[\.\:](\d{2})\s*-\s*(\d{1,2})[\.\:](\d{2})/);
             if (match) {
                 return {
                     start: parseInt(match[1]) * 60 + parseInt(match[2]),
-                    end: parseInt(match[3]) * 60 + parseInt(match[4]),
-                    raw: waktuStr
+                    end: parseInt(match[3]) * 60 + parseInt(match[4])
                 };
             }
             return null;
-        }
-
-        // Fungsi mengubah format YYYY-MM-DD dari Kalender menjadi "Rabu, 10 Juni 2026"
-        function formatTanggalIndo(dateString) {
-            if(!dateString) return "";
-            const parts = dateString.split('-'); 
-            const year = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1; 
-            const day = parseInt(parts[2], 10);
-            
-            const d = new Date(year, month, day);
-            const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            
-            let namaHariStr = namaHari[d.getDay()];
-            let tanggalStr = day < 10 ? '0' + day : day.toString();
-            let bulanStr = namaBulan[month];
-            
-            return `${namaHariStr}, ${tanggalStr} ${bulanStr} ${year}`;
         }
 
         Papa.parse(sheetUrl, {
@@ -110,30 +112,33 @@
             skipEmptyLines: true,
             complete: function(results) {
                 globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
+                
+                // Ambil daftar tanggal pertama dari data untuk diset sebagai nilai awal kalender
+                let tanggalUnik = [...new Set(globalData.map(item => item['Hari Tanggal']))];
+                if(tanggalUnik.length > 0) {
+                    let kalenderFormatAwal = formatDariCSV(tanggalUnik[0]);
+                    $('#pilihTanggal').val(kalenderFormatAwal).change();
+                }
             }
         });
 
-        // Saat kalender tanggal dipilih
+        // Saat tanggal di kalender dipilih/berubah
         $('#pilihTanggal').on('change', function() {
-            let tglMentah = $(this).val(); // Format: 2026-06-10
-            if(!tglMentah) return;
+            let selectedDateVal = $(this).val(); 
+            if(!selectedDateVal) return;
 
-            // Terjemahkan ke format CSV
-            let tglPilihan = formatTanggalIndo(tglMentah);
-            
-            // Tampilkan judul tanggal di atas studio
-            $('#judulTanggal').removeClass('d-none');
-            $('#teksTanggal').text(tglPilihan);
+            // Terjemahkan tanggal kalender menjadi teks Indonesia agar cocok dengan spreadsheet
+            let tglPencarianCSV = formatKeCSV(selectedDateVal);
 
-            let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPilihan);
+            let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPencarianCSV);
             let jadwalPerStudio = {};
 
-            // Reset Peringatan
+            // Bersihkan tampilan sebelumnya
+            $('#areaStudio').empty();
             $('#peringatanBentrokUtama').addClass('d-none');
             $('#peringatanKosong').addClass('d-none');
-            $('#areaStudio').html('');
 
-            if (dataHariIni.length === 0) {
+            if(dataHariIni.length === 0) {
                 $('#peringatanKosong').removeClass('d-none');
                 return;
             }
@@ -141,9 +146,7 @@
             // Kelompokkan jadwal berdasarkan Studio
             dataHariIni.forEach(row => {
                 let namaStudio = row['STUDIO'] ? row['STUDIO'].trim() : 'Studio Tidak Disebutkan';
-                if(!jadwalPerStudio[namaStudio]) {
-                    jadwalPerStudio[namaStudio] = [];
-                }
+                if(!jadwalPerStudio[namaStudio]) { jadwalPerStudio[namaStudio] = []; }
                 jadwalPerStudio[namaStudio].push(row);
             });
 
@@ -154,6 +157,7 @@
             Object.keys(jadwalPerStudio).sort().forEach(studio => {
                 let sesiStudio = jadwalPerStudio[studio];
                 
+                // Urutkan jadwal dari pagi ke sore otomatis
                 sesiStudio.sort((a, b) => {
                     let wA = parseWaktuToMinutes(a['WAKTU'] || "");
                     let wB = parseWaktuToMinutes(b['WAKTU'] || "");
@@ -163,7 +167,8 @@
                 let htmlSesi = "";
                 let endSebelumnya = 0;
 
-                sesiStudio.forEach((sesi, index) => {
+                // Proses deteksi bentrok
+                sesiStudio.forEach((sesi) => {
                     let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                     let isBentrok = false;
 
@@ -172,9 +177,7 @@
                             isBentrok = true;
                             adaBentrokGlobal = true;
                         }
-                        if (waktuParsed.end > endSebelumnya) {
-                            endSebelumnya = waktuParsed.end;
-                        }
+                        if (waktuParsed.end > endSebelumnya) { endSebelumnya = waktuParsed.end; }
                     }
 
                     htmlSesi += `
@@ -207,9 +210,7 @@
 
             $('#areaStudio').html(htmlStudio);
 
-            if (adaBentrokGlobal) {
-                $('#peringatanBentrokUtama').removeClass('d-none');
-            }
+            if (adaBentrokGlobal) { $('#peringatanBentrokUtama').removeClass('d-none'); }
         });
     </script>
 </body>
