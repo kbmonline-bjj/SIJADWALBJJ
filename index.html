@@ -41,18 +41,17 @@
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-        /* Style Baru Untuk Mapel Card (Lebih Ringkas & 2 Kolom) */
+        /* Style Mapel Card */
         .cursor-pointer { cursor: pointer; }
         .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; }
         .mapel-card:hover { border-color: #cbd5e1; }
-        .mapel-header { background: #f8fafc; padding: 1rem 1.2rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; transition: 0.2s; }
+        .mapel-header { background: #f8fafc; padding: 0.9rem 1.1rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0f172a; transition: 0.2s; }
         .mapel-header:hover { background: #f1f5f9; }
         
-        /* Modifikasi ukuran font tabel agar ringkas */
-        .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 0.5rem 0.8rem; }
-        .mapel-table td { padding: 0.6rem 0.8rem; font-size: 0.8rem; vertical-align: middle; }
+        /* Modifikasi ukuran font tabel agar ringkas di 3 kolom */
+        .mapel-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 0.4rem 0.6rem; letter-spacing: 0.3px;}
+        .mapel-table td { padding: 0.5rem 0.6rem; font-size: 0.75rem; vertical-align: middle; }
         
-        /* Transisi Icon Collapse */
         .collapse-icon { transition: transform 0.3s ease; }
         .collapsed .collapse-icon { transform: rotate(-90deg); }
     </style>
@@ -124,7 +123,7 @@
                     <h5 class="fw-bold text-muted">Silakan Pilih Kelas</h5>
                 </div>
 
-                <!-- Area Hasil Filter Rekapan (Akan diisi 2 Kolom) -->
+                <!-- Area Hasil Filter Rekapan (3 Kolom: col-lg-4) -->
                 <div id="areaRekapanKelas" class="row">
                     <!-- Kartu-kartu mapel akan di-generate oleh JS di sini -->
                 </div>
@@ -146,7 +145,6 @@
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-        // Konversi format (YYYY-MM-DD) -> (Rabu, 10 Juni 2026)
         function formatKeCSV(dateStr) {
             if(!dateStr) return "";
             let [y, m, d] = dateStr.split('-');
@@ -154,7 +152,6 @@
             return `${namaHari[tgl.getDay()]}, ${d} ${namaBulan[tgl.getMonth()]} ${y}`;
         }
 
-        // Pengurai Format Tanggal CSV (Rabu, 10 Juni 2026) menjadi Objek Date Javascript untuk deteksi hari
         function parseDateFromCSV(csvDateStr) {
             if(!csvDateStr) return null;
             let parts = csvDateStr.split(','); 
@@ -207,7 +204,7 @@
         });
 
         // ==========================================
-        // LOGIKA MENU REKAPAN KELAS (2 Kolom + Indikator Tanggal + Collapse)
+        // LOGIKA MENU REKAPAN KELAS (3 Kolom: col-lg-4)
         // ==========================================
         $('#pilihKelas').on('change', function() {
             let selectedKelas = $(this).val();
@@ -232,9 +229,8 @@
             });
 
             let htmlOutput = "";
-            let mapelIndex = 0; // Untuk ID unik collapse
+            let mapelIndex = 0;
             
-            // Atur waktu hari ini jam 00:00 untuk perbandingan tanggal
             let todayObj = new Date();
             todayObj.setHours(0,0,0,0);
             
@@ -247,20 +243,16 @@
                     let statusBadge = "";
                     let rowClass = "";
                     
-                    // Logika pewarnaan status tanggal
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
                         if (dateObj < todayObj) {
-                            // Sudah lewat
-                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.65rem;">Selesai</span>';
+                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>';
                             rowClass = "text-muted opacity-75";
                         } else if (dateObj.getTime() === todayObj.getTime()) {
-                            // Hari ini
-                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.65rem;">Hari Ini</span>';
+                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>';
                             rowClass = "table-success text-dark";
                         } else {
-                            // Belum terjadi
-                            statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.65rem;">Mendatang</span>';
+                            statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>';
                         }
                     }
 
@@ -270,32 +262,30 @@
                                 <div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>
                                 ${statusBadge}
                             </td>
-                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                             <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
                             <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
                         </tr>
                     `;
                 });
 
-                // Bungkus dalam kolom grid Bootstrap (col-md-6) agar menjadi 2 kolom
+                // Perubahan utama ada di class="col-md-6 col-lg-4"
                 htmlOutput += `
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 col-lg-4 mb-3">
                         <div class="mapel-card">
-                            <!-- Header yg bisa di-klik untuk buka/tutup tabel (collapsed by default) -->
                             <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseMapel${mapelIndex}">
                                 <div class="d-flex align-items-center w-100">
                                     <i class="fas fa-book text-success me-2"></i> 
-                                    <span class="text-truncate fw-bold" style="max-width: 65%; font-size: 0.95rem;">${mapel}</span>
+                                    <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
                                     <div class="ms-auto d-flex align-items-center">
-                                        <span class="badge bg-secondary rounded-pill me-3" style="font-size: 0.7rem;">${riwayat.length} Sesi</span>
-                                        <i class="fas fa-chevron-down text-muted collapse-icon"></i>
+                                        <span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span>
+                                        <i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Area Sembunyi (Detail Tabel) -->
                             <div id="collapseMapel${mapelIndex}" class="collapse">
-                                <div class="table-responsive mb-0" style="max-height: 280px; overflow-y: auto;">
+                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;">
                                     <table class="table mapel-table mb-0 table-hover table-sm">
                                         <thead>
                                             <tr>
