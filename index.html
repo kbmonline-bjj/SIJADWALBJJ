@@ -147,6 +147,7 @@
                                 <input type="date" id="endDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
                             </div>
                         </div>
+                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
                     </div>
                 </div>
                 <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
@@ -183,9 +184,10 @@
                                 <input type="date" id="endDatePengajar" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
                             </div>
                         </div>
+                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
                     </div>
 
-                    <!-- Filter Mode 2: Rekapan Periode (Baru) -->
+                    <!-- Filter Mode 2: Rekapan Periode -->
                     <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
                         <select id="pilihCabang" class="form-select w-100 text-warning">
                             <option value="">-- Semua Cabang/Bagian --</option>
@@ -200,6 +202,7 @@
                                 <input type="date" id="endDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
                             </div>
                         </div>
+                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk memuat SEMUA data pengajar</small>
                     </div>
                 </div>
 
@@ -285,6 +288,8 @@
                 $('#areaRekapanPeriode').removeClass('d-none');
                 $('#pesanPilihPengajar').addClass('d-none');
                 
+                // Sengaja memanggil render langsung tanpa butuh klik apa-apa 
+                // Jika tanggal kosong, otomatis menampilkan semua data sepanjang waktu
                 renderRekapanPeriode();
             }
         }
@@ -294,11 +299,8 @@
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
             $('#pilihTanggal').val(todayFormatted);
             
-            // Set default date range for Rekapan Periode (Awal bulan s/d hari ini)
-            let firstDay = new Date(Date.now() - tzOffset);
-            firstDay.setDate(1);
-            $('#startDatePeriode').val(firstDay.toISOString().split('T')[0]);
-            $('#endDatePeriode').val(todayFormatted);
+            // Catatan: Tanggal untuk filter Rekapan Periode sengaja dibiarkan KOSONG 
+            // agar saat dibuka, langsung memuat seluruh riwayat data.
 
             Papa.parse(sheetUrl, {
                 download: true,
@@ -536,6 +538,10 @@
 
             let dataFiltered = globalData.filter(row => {
                 if(selectedCabang && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedCabang)) return false;
+                
+                // Jika tanggal dikosongkan, bypass filter tanggal (Tampilkan Semua Waktu)
+                if(!startObj && !endObj) return true; 
+
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -563,12 +569,10 @@
                 }
             });
 
-            // Ubah object ke array lalu urutkan berdasarkan Total Sesi (Terbanyak ke Sedikit)
             let sortedStats = Object.keys(stats).map(k => ({nama: k, ...stats[k]})).sort((a,b) => b.total - a.total);
 
             let tbody = "";
             sortedStats.forEach((st, idx) => {
-                // Potong list mapel jika terlalu panjang
                 let mapelList = Array.from(st.mapel).slice(0, 3).join(', ') + (st.mapel.size > 3 ? '...' : '');
                 let cabangList = Array.from(st.cabang).join(', ');
                 
@@ -587,7 +591,7 @@
                 <div class="col-12">
                     <div class="group-card p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list-ol text-warning me-2"></i>Peringkat Beban Mengajar Pengajar</h5>
+                            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list-ol text-warning me-2"></i>Peringkat Beban Mengajar (${!startObj && !endObj ? 'Semua Waktu' : 'Periode Terpilih'})</h5>
                             <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${sortedStats.length} Pengajar Aktif</span>
                         </div>
                         <div class="table-responsive">
