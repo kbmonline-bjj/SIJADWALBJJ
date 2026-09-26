@@ -49,6 +49,7 @@
         .mode-toggle { background: rgba(255,255,255,0.2); border-radius: 12px; padding: 0.3rem; display: inline-flex; }
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn-mode-pengajar.active { color: #d97706 !important; }
 
         .cursor-pointer { cursor: pointer; }
         .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; }
@@ -70,6 +71,7 @@
         .select2-dropdown { border-radius: 12px !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; overflow: hidden !important; }
         .select2-search__field { border-radius: 8px !important; padding: 0.5rem !important; }
         .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { background-color: #4f46e5 !important; }
+        .select2-pengajar-active .select2-results__option--highlighted { background-color: #f59e0b !important; }
     </style>
 </head>
 <body>
@@ -159,10 +161,16 @@
                 <div class="header-section header-pengajar mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
                         <h2 class="fw-bold mb-2"><i class="fas fa-chalkboard-teacher me-2"></i>Rekapan Pengajar</h2>
-                        <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Cari nama pengajar dan filter tanggal untuk melihat riwayat.</p>
+                        <!-- Tombol Toggle Mode Pengajar -->
+                        <div class="mode-toggle mt-2">
+                            <button class="btn-mode btn-mode-pengajar active" id="btnPengajarIndividu" onclick="ubahModePengajar('individu')"><i class="fas fa-user-clock me-2"></i>Riwayat Individu</button>
+                            <button class="btn-mode btn-mode-pengajar" id="btnPengajarPeriode" onclick="ubahModePengajar('periode')"><i class="fas fa-chart-bar me-2"></i>Rekapan Total Periode</button>
+                        </div>
                     </div>
-                    <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <select id="pilihPengajar" class="form-select w-100 text-primary">
+                    
+                    <!-- Filter Mode 1: Riwayat Individu -->
+                    <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                        <select id="pilihPengajar" class="form-select w-100 text-warning">
                             <option value="">Memuat data...</option>
                         </select>
                         <div class="d-flex gap-2 w-100 mt-1">
@@ -176,12 +184,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Filter Mode 2: Rekapan Periode (Baru) -->
+                    <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
+                        <select id="pilihCabang" class="form-select w-100 text-warning">
+                            <option value="">-- Semua Cabang/Bagian --</option>
+                        </select>
+                        <div class="d-flex gap-2 w-100 mt-1">
+                            <div class="w-50">
+                                <span class="date-filter-label">Dari Tanggal:</span>
+                                <input type="date" id="startDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                            </div>
+                            <div class="w-50">
+                                <span class="date-filter-label">Sampai Tanggal:</span>
+                                <input type="date" id="endDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Tampilan Pesan Kosong (Mode Individu) -->
                 <div id="pesanPilihPengajar" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
                     <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
                     <h5 class="fw-bold text-muted">Silakan Cari Pengajar</h5>
                 </div>
+                
+                <!-- Area Tampilan Hasil Filter -->
                 <div id="areaRekapanPengajar" class="row"></div>
+                <div id="areaRekapanPeriode" class="row d-none"></div>
+
             </div>
 
         </div>
@@ -229,16 +260,45 @@
 
         function ubahMode(mode) {
             modeTampilan = mode;
-            $('.btn-mode').removeClass('active');
+            $('#btnModeStudio, #btnModeJam').removeClass('active');
             if(mode === 'studio') $('#btnModeStudio').addClass('active');
             else $('#btnModeJam').addClass('active');
             $('#pilihTanggal').change(); 
+        }
+
+        function ubahModePengajar(mode) {
+            $('.btn-mode-pengajar').removeClass('active');
+            if(mode === 'individu') {
+                $('#btnPengajarIndividu').addClass('active');
+                $('#filterPengajarIndividu').removeClass('d-none').addClass('d-flex');
+                $('#filterPengajarPeriode').removeClass('d-flex').addClass('d-none');
+                $('#areaRekapanPengajar').removeClass('d-none');
+                $('#areaRekapanPeriode').addClass('d-none');
+                
+                if(!$('#pilihPengajar').val()) $('#pesanPilihPengajar').removeClass('d-none');
+                else renderRekapanPengajar();
+            } else {
+                $('#btnPengajarPeriode').addClass('active');
+                $('#filterPengajarIndividu').removeClass('d-flex').addClass('d-none');
+                $('#filterPengajarPeriode').removeClass('d-none').addClass('d-flex');
+                $('#areaRekapanPengajar').addClass('d-none');
+                $('#areaRekapanPeriode').removeClass('d-none');
+                $('#pesanPilihPengajar').addClass('d-none');
+                
+                renderRekapanPeriode();
+            }
         }
 
         $(document).ready(function() {
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
             $('#pilihTanggal').val(todayFormatted);
+            
+            // Set default date range for Rekapan Periode (Awal bulan s/d hari ini)
+            let firstDay = new Date(Date.now() - tzOffset);
+            firstDay.setDate(1);
+            $('#startDatePeriode').val(firstDay.toISOString().split('T')[0]);
+            $('#endDatePeriode').val(todayFormatted);
 
             Papa.parse(sheetUrl, {
                 download: true,
@@ -250,27 +310,34 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
+                    // Dropdown Kelas
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
                     kelasUnik = kelasUnik.filter(k => k !== '').sort();
                     let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
                     kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
                     $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
 
+                    // Dropdown Pengajar Individu
                     let pengajarSet = new Set();
                     globalData.forEach(row => {
                         if(row['PENGAJAR']) {
                             let namaPecah = row['PENGAJAR'].split(',');
                             namaPecah.forEach(nama => {
                                 let bersih = nama.trim();
-                                if(bersih !== '' && bersih.toLowerCase() !== 'cancel' && bersih !== '-') {
-                                    pengajarSet.add(bersih);
-                                }
+                                if(bersih !== '' && bersih.toLowerCase() !== 'cancel' && bersih !== '-') pengajarSet.add(bersih);
                             });
                         }
                     });
                     let opsiPengajar = '<option value="">-- Cari Pengajar --</option>';
                     [...pengajarSet].sort().forEach(p => { opsiPengajar += `<option value="${p}">${p}</option>`; });
-                    $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true });
+                    $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+
+                    // Dropdown Cabang/Bagian
+                    let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
+                    cabangUnik = cabangUnik.filter(c => c !== '').sort();
+                    let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
+                    cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
+                    $('#pilihCabang').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
                     $('#pilihTanggal').change();
                 }
@@ -278,7 +345,7 @@
         });
 
         // ==========================================
-        // FUNGSI RENDER TAB 2: REKAPAN KELAS 
+        // RENDER REKAPAN KELAS 
         // ==========================================
         function renderRekapanKelas() {
             let selectedKelas = $('#pilihKelas').val();
@@ -289,7 +356,6 @@
             if(!selectedKelas) { pesanAwal.removeClass('d-none'); return; }
             pesanAwal.addClass('d-none');
 
-            // Setup Filter Tanggal
             let startVal = $('#startDateKelas').val();
             let endVal = $('#endDateKelas').val();
             let startObj = startVal ? new Date(startVal) : null;
@@ -299,13 +365,10 @@
 
             let dataKelasIni = globalData.filter(row => {
                 if(!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
-                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
-                
                 if(startObj && rowDate < startObj) return false;
                 if(endObj && rowDate > endObj) return false;
-                
                 return true;
             });
 
@@ -321,10 +384,8 @@
                 return;
             }
 
-            let htmlOutput = "";
-            let mapelIndex = 0;
-            let todayObj = new Date();
-            todayObj.setHours(0,0,0,0);
+            let htmlOutput = ""; let mapelIndex = 0;
+            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
             
             Object.keys(mapelGroup).sort().forEach(mapel => {
                 let riwayat = mapelGroup[mapel];
@@ -335,13 +396,9 @@
                     let statusBadge = ""; let rowClass = "";
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
-                        if (dateObj < todayObj) {
-                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75";
-                        } else if (dateObj.getTime() === todayObj.getTime()) {
-                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark";
-                        } else {
-                            statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>';
-                        }
+                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
+                        else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
                     tbodyHtml += `<tr class="${rowClass}">
@@ -362,9 +419,7 @@
                                 </div>
                             </div>
                             <div id="collapseKelas${mapelIndex}" class="collapse">
-                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;">
-                                    <table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table>
-                                </div>
+                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                             </div>
                         </div>
                     </div>
@@ -373,12 +428,10 @@
             });
             areaRekapan.html(htmlOutput);
         }
-
-        // Trigger Event untuk Kelas
         $('#pilihKelas, #startDateKelas, #endDateKelas').on('change', renderRekapanKelas);
 
         // ==========================================
-        // FUNGSI RENDER TAB 3: REKAPAN PENGAJAR
+        // RENDER REKAPAN PENGAJAR (INDIVIDU)
         // ==========================================
         function renderRekapanPengajar() {
             let selectedPengajar = $('#pilihPengajar').val();
@@ -389,7 +442,6 @@
             if(!selectedPengajar) { pesanAwal.removeClass('d-none'); return; }
             pesanAwal.addClass('d-none');
 
-            // Setup Filter Tanggal
             let startVal = $('#startDatePengajar').val();
             let endVal = $('#endDatePengajar').val();
             let startObj = startVal ? new Date(startVal) : null;
@@ -404,10 +456,8 @@
                 
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
-                
                 if(startObj && rowDate < startObj) return false;
                 if(endObj && rowDate > endObj) return false;
-
                 return true;
             });
 
@@ -423,10 +473,8 @@
                 return;
             }
 
-            let htmlOutput = "";
-            let mapelIndex = 0;
-            let todayObj = new Date();
-            todayObj.setHours(0,0,0,0);
+            let htmlOutput = ""; let mapelIndex = 0;
+            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
             
             Object.keys(mapelGroup).sort().forEach(mapel => {
                 let riwayat = mapelGroup[mapel];
@@ -437,13 +485,9 @@
                     let statusBadge = ""; let rowClass = "";
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
-                        if (dateObj < todayObj) {
-                            statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75";
-                        } else if (dateObj.getTime() === todayObj.getTime()) {
-                            statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark";
-                        } else {
-                            statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>';
-                        }
+                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
+                        else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
                     tbodyHtml += `<tr class="${rowClass}">
@@ -464,9 +508,7 @@
                                 </div>
                             </div>
                             <div id="collapsePengajar${mapelIndex}" class="collapse">
-                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;">
-                                    <table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table>
-                                </div>
+                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                             </div>
                         </div>
                     </div>
@@ -475,30 +517,118 @@
             });
             areaRekapan.html(htmlOutput);
         }
-
-        // Trigger Event untuk Pengajar
         $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
-        // TAB 1: PANTAUAN HARIAN
+        // RENDER REKAPAN PENGAJAR (TOTAL PERIODE)
+        // ==========================================
+        function renderRekapanPeriode() {
+            let selectedCabang = $('#pilihCabang').val();
+            let startVal = $('#startDatePeriode').val();
+            let endVal = $('#endDatePeriode').val();
+            let areaPeriode = $('#areaRekapanPeriode');
+            areaPeriode.empty();
+
+            let startObj = startVal ? new Date(startVal) : null;
+            if(startObj) startObj.setHours(0,0,0,0);
+            let endObj = endVal ? new Date(endVal) : null;
+            if(endObj) endObj.setHours(23,59,59,999);
+
+            let dataFiltered = globalData.filter(row => {
+                if(selectedCabang && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedCabang)) return false;
+                let rowDate = parseDateFromCSV(row['Hari Tanggal']);
+                if(!rowDate) return false;
+                if(startObj && rowDate < startObj) return false;
+                if(endObj && rowDate > endObj) return false;
+                return true;
+            });
+
+            if(dataFiltered.length === 0) {
+                areaPeriode.html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p>Tidak ada jadwal terdaftar pada filter dan rentang waktu tersebut.</p></div>');
+                return;
+            }
+
+            let stats = {};
+            dataFiltered.forEach(row => {
+                if(row['PENGAJAR']) {
+                    let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
+                    namaPecah.forEach(nama => {
+                        if(nama !== '' && nama.toLowerCase() !== 'cancel' && nama !== '-') {
+                            if(!stats[nama]) stats[nama] = { total: 0, mapel: new Set(), cabang: new Set() };
+                            stats[nama].total += 1;
+                            if(row['MAPEL']) stats[nama].mapel.add(row['MAPEL'].trim());
+                            if(row['CBG/BAG']) stats[nama].cabang.add(row['CBG/BAG'].trim());
+                        }
+                    });
+                }
+            });
+
+            // Ubah object ke array lalu urutkan berdasarkan Total Sesi (Terbanyak ke Sedikit)
+            let sortedStats = Object.keys(stats).map(k => ({nama: k, ...stats[k]})).sort((a,b) => b.total - a.total);
+
+            let tbody = "";
+            sortedStats.forEach((st, idx) => {
+                // Potong list mapel jika terlalu panjang
+                let mapelList = Array.from(st.mapel).slice(0, 3).join(', ') + (st.mapel.size > 3 ? '...' : '');
+                let cabangList = Array.from(st.cabang).join(', ');
+                
+                tbody += `
+                    <tr>
+                        <td class="text-center fw-bold text-muted">${idx + 1}</td>
+                        <td class="fw-bold text-dark" style="font-size: 1.05rem;">${st.nama}</td>
+                        <td><span class="badge bg-light text-secondary border px-2 py-1">${cabangList || '-'}</span></td>
+                        <td class="text-muted" style="font-size: 0.85rem;">${mapelList || '-'}</td>
+                        <td class="text-center fw-bold text-success fs-5">${st.total}</td>
+                    </tr>
+                `;
+            });
+
+            let tableHtml = `
+                <div class="col-12">
+                    <div class="group-card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list-ol text-warning me-2"></i>Peringkat Beban Mengajar Pengajar</h5>
+                            <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${sortedStats.length} Pengajar Aktif</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center" width="5%">No</th>
+                                        <th width="25%">Nama Pengajar</th>
+                                        <th width="20%">Cabang / Bagian</th>
+                                        <th width="35%">Mata Pelajaran / Agenda (Contoh)</th>
+                                        <th class="text-center" width="15%">Total Sesi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tbody}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            areaPeriode.html(tableHtml);
+        }
+        $('#pilihCabang, #startDatePeriode, #endDatePeriode').on('change', renderRekapanPeriode);
+
+        // ==========================================
+        // PANTAUAN HARIAN
         // ==========================================
         $('#pilihTanggal').on('change', function() {
             let selectedDateVal = $(this).val(); 
             if(!selectedDateVal) return;
-            
             let tglPencarianCSV = formatKeCSV(selectedDateVal);
             let dataHariIni = globalData.filter(row => row['Hari Tanggal'] === tglPencarianCSV);
-            
-            $('#areaTampilan').empty();
-            $('#peringatanBentrokUtama').addClass('d-none');
+            $('#areaTampilan').empty(); $('#peringatanBentrokUtama').addClass('d-none');
 
             let tzOffset = (new Date()).getTimezoneOffset() * 60000;
             let todayRealStr = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
-            let now = new Date();
-            let currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let now = new Date(); let currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-            let htmlOutput = "";
-            let adaBentrokGlobal = false;
+            let htmlOutput = ""; let adaBentrokGlobal = false;
 
             if (modeTampilan === 'studio') {
                 let jadwalPerStudio = {};
@@ -514,46 +644,25 @@
                         let wA = parseWaktuToMinutes(a['WAKTU'] || ""), wB = parseWaktuToMinutes(b['WAKTU'] || "");
                         return (wA && wB) ? (wA.start - wB.start) : 0;
                     });
-
                     let htmlSesi = "", endSebelumnya = 0;
                     sesiStudio.forEach((sesi) => {
                         let waktuParsed = parseWaktuToMinutes(sesi['WAKTU'] || "");
                         let isBentrok = false;
-                        
-                        if (waktuParsed) {
-                            if (waktuParsed.start < endSebelumnya) { isBentrok = true; adaBentrokGlobal = true; }
-                            if (waktuParsed.end > endSebelumnya) endSebelumnya = waktuParsed.end;
-                        }
+                        if (waktuParsed) { if (waktuParsed.start < endSebelumnya) { isBentrok = true; adaBentrokGlobal = true; } if (waktuParsed.end > endSebelumnya) endSebelumnya = waktuParsed.end; }
 
                         let statusHtml = ""; let itemClass = "";
-                        if (selectedDateVal < todayRealStr) {
-                            statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai";
-                        } else if (selectedDateVal === todayRealStr && waktuParsed) {
-                            if (currentMinutes > waktuParsed.end) {
-                                statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai";
-                            } else if (currentMinutes >= waktuParsed.start && currentMinutes <= waktuParsed.end) {
-                                statusHtml = '<span class="badge-live ms-2"><i class="fas fa-broadcast-tower me-1"></i>LIVE</span>'; itemClass = "item-live";
-                            }
+                        if (selectedDateVal < todayRealStr) { statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai"; }
+                        else if (selectedDateVal === todayRealStr && waktuParsed) {
+                            if (currentMinutes > waktuParsed.end) { statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai"; }
+                            else if (currentMinutes >= waktuParsed.start && currentMinutes <= waktuParsed.end) { statusHtml = '<span class="badge-live ms-2"><i class="fas fa-broadcast-tower me-1"></i>LIVE</span>'; itemClass = "item-live"; }
                         }
 
-                        htmlSesi += `
-                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>
-                                        ${statusHtml}
-                                    </div>
-                                    <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
-                                </div>
-                                <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
-                                <div style="font-size:0.8rem; color:#64748b;">
-                                    <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
-                                    <i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
-                                </div>
-                            </div>
-                        `;
+                        htmlSesi += `<div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                            <div class="d-flex justify-content-between align-items-center"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
+                            <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
+                            <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
+                        </div>`;
                     });
-
                     htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header text-uppercase"><i class="fas fa-video me-2 text-primary"></i>${studio}</div><div class="sesi-container">${htmlSesi}</div></div></div>`;
                 });
 
@@ -566,76 +675,42 @@
                 });
 
                 let sortedJamKeys = Object.keys(jadwalPerJam).sort((a,b) => {
-                    let wA = parseWaktuToMinutes(a), wB = parseWaktuToMinutes(b);
-                    return (wA && wB) ? (wA.start - wB.start) : 0;
+                    let wA = parseWaktuToMinutes(a), wB = parseWaktuToMinutes(b); return (wA && wB) ? (wA.start - wB.start) : 0;
                 });
 
                 sortedJamKeys.forEach(jam => {
-                    let sesiJam = jadwalPerJam[jam];
-                    let waktuJamGroup = parseWaktuToMinutes(jam);
-                    
+                    let sesiJam = jadwalPerJam[jam]; let waktuJamGroup = parseWaktuToMinutes(jam);
                     let overlappingStudios = [];
                     dataHariIni.forEach(allSesi => {
-                        let wLain = parseWaktuToMinutes(allSesi['WAKTU']);
-                        let stdLain = allSesi['STUDIO'] ? allSesi['STUDIO'].trim() : '-';
-                        if (wLain && waktuJamGroup && stdLain !== '-' && stdLain !== '') {
-                            if (wLain.start < waktuJamGroup.end && wLain.end > waktuJamGroup.start) {
-                                overlappingStudios.push(stdLain);
-                            }
-                        }
+                        let wLain = parseWaktuToMinutes(allSesi['WAKTU']); let stdLain = allSesi['STUDIO'] ? allSesi['STUDIO'].trim() : '-';
+                        if (wLain && waktuJamGroup && stdLain !== '-' && stdLain !== '') { if (wLain.start < waktuJamGroup.end && wLain.end > waktuJamGroup.start) overlappingStudios.push(stdLain); }
                     });
 
-                    let studioCounts = {};
-                    overlappingStudios.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
+                    let studioCounts = {}; overlappingStudios.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
                     
-                    let statusGrupHtml = "";
-                    let isGrupSelesai = false;
-                    
-                    if (selectedDateVal < todayRealStr) {
-                        statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true;
-                    } else if (selectedDateVal === todayRealStr && waktuJamGroup) {
-                        if (currentMinutes > waktuJamGroup.end) {
-                            statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true;
-                        } else if (currentMinutes >= waktuJamGroup.start && currentMinutes <= waktuJamGroup.end) {
-                            statusGrupHtml = '<span class="badge-live float-end"><i class="fas fa-broadcast-tower"></i></span>';
-                        }
+                    let statusGrupHtml = ""; let isGrupSelesai = false;
+                    if (selectedDateVal < todayRealStr) { statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true; }
+                    else if (selectedDateVal === todayRealStr && waktuJamGroup) {
+                        if (currentMinutes > waktuJamGroup.end) { statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true; }
+                        else if (currentMinutes >= waktuJamGroup.start && currentMinutes <= waktuJamGroup.end) { statusGrupHtml = '<span class="badge-live float-end"><i class="fas fa-broadcast-tower"></i></span>'; }
                     }
 
                     let htmlSesi = "";
                     sesiJam.forEach((sesi) => {
-                        let studio = sesi['STUDIO'] ? sesi['STUDIO'].trim() : '-';
-                        let isBentrok = false;
-                        
-                        if (studio !== '-' && studio !== '' && studioCounts[studio] > 1) {
-                            isBentrok = true;
-                            adaBentrokGlobal = true;
-                        }
-                        
+                        let studio = sesi['STUDIO'] ? sesi['STUDIO'].trim() : '-'; let isBentrok = false;
+                        if (studio !== '-' && studio !== '' && studioCounts[studio] > 1) { isBentrok = true; adaBentrokGlobal = true; }
                         let itemClass = isGrupSelesai ? "item-selesai" : "";
 
-                        htmlSesi += `
-                            <div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span>
-                                    <span class="badge-soft">${sesi['KELAS'] || '-'}</span>
-                                </div>
-                                <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
-                                <div style="font-size:0.8rem; color:#64748b;">
-                                    <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
-                                    <i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
-                                </div>
-                            </div>
-                        `;
+                        htmlSesi += `<div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                            <div class="d-flex justify-content-between align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
+                            <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
+                            <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
+                        </div>`;
                     });
 
-                    let studioTersisa = daftarSemuaStudio.filter(s => !studioCounts[s]);
-                    let htmlStudioKosong = "";
-                    
-                    if(studioTersisa.length > 0) {
-                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</div><div class="d-flex flex-wrap gap-1">${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}</div></div>`;
-                    } else {
-                        htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Terpakai</div></div>`;
-                    }
+                    let studioTersisa = daftarSemuaStudio.filter(s => !studioCounts[s]); let htmlStudioKosong = "";
+                    if(studioTersisa.length > 0) { htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</div><div class="d-flex flex-wrap gap-1">${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}</div></div>`; }
+                    else { htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Terpakai</div></div>`; }
 
                     htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header"><i class="far fa-clock me-2 text-primary"></i>Sesi: ${jam} ${statusGrupHtml}</div><div class="sesi-container">${htmlSesi} ${htmlStudioKosong}</div></div></div>`;
                 });
