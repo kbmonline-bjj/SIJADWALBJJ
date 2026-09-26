@@ -29,8 +29,9 @@
 
         .form-control-modern {
             border-radius: 16px; border: 2px solid transparent; padding: 0.9rem 1.2rem; font-weight: 600;
-            color: #1e293b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); cursor: pointer;
+            color: #1e293b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s;
         }
+        .form-control-modern:focus { border-color: #93c5fd; box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4); outline: none; }
         .date-filter-label { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 0.2rem; display: block; }
         
         .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; }
@@ -109,7 +110,7 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- TAB 1: PANTAUAN HARIAN -->
+            <!-- TAB 1: PANTAUAN HARIAN (Tanpa Kunci) -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div>
@@ -131,87 +132,127 @@
 
             <!-- TAB 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
-                <div class="header-section header-rekapan mt-0">
-                    <div class="flex-grow-1 mb-3 mb-md-0">
-                        <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
-                        <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Cari kelas dan filter rentang tanggal untuk melihat riwayatnya.</p>
+                
+                <!-- LAYAR KUNCI REKAPAN KELAS -->
+                <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
+                    <div class="mb-4 mt-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fas fa-lock fs-2 text-primary"></i>
+                        </div>
                     </div>
-                    <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <select id="pilihKelas" class="form-select w-100 text-primary">
-                            <option value="">Memuat data...</option>
-                        </select>
-                        <div class="d-flex gap-2 w-100 mt-1">
-                            <div class="w-50">
-                                <span class="date-filter-label">Dari Tanggal:</span>
-                                <input type="date" id="startDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                            <div class="w-50">
-                                <span class="date-filter-label">Sampai Tanggal:</span>
-                                <input type="date" id="endDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                    <h4 class="fw-bold text-dark mb-2">Akses Terbatas</h4>
+                    <p class="text-muted mb-4">Silakan masukkan kode akses untuk membuka data rekapan.</p>
+                    <div class="d-flex justify-content-center mx-auto mb-3" style="max-width: 320px;">
+                        <input type="password" class="form-control form-control-modern text-center me-2 input-kode" placeholder="Masukkan Kode">
+                        <button class="btn btn-primary px-4 fw-bold rounded-3 btn-unlock" onclick="bukaAkses(this)">Buka</button>
+                    </div>
+                    <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
+                </div>
+
+                <!-- KONTEN ASLI (Sembunyi sebelum dibuka kuncinya) -->
+                <div class="secured-content d-none">
+                    <div class="header-section header-rekapan mt-0">
+                        <div class="flex-grow-1 mb-3 mb-md-0">
+                            <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
+                            <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Cari kelas dan filter rentang tanggal untuk melihat riwayatnya.</p>
+                        </div>
+                        <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                            <select id="pilihKelas" class="form-select w-100 text-primary">
+                                <option value="">Memuat data...</option>
+                            </select>
+                            <div class="d-flex gap-2 w-100 mt-1">
+                                <div class="w-50">
+                                    <span class="date-filter-label">Dari Tanggal:</span>
+                                    <input type="date" id="startDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                                <div class="w-50">
+                                    <span class="date-filter-label">Sampai Tanggal:</span>
+                                    <input type="date" id="endDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
+                        <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
+                        <h5 class="fw-bold text-muted">Silakan Cari Kelas</h5>
+                    </div>
+                    <div id="areaRekapanKelas" class="row"></div>
                 </div>
-                <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
-                    <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
-                    <h5 class="fw-bold text-muted">Silakan Cari Kelas</h5>
-                </div>
-                <div id="areaRekapanKelas" class="row"></div>
             </div>
 
             <!-- TAB 3: REKAPAN PENGAJAR -->
             <div class="tab-pane fade" id="pengajar" role="tabpanel">
-                <div class="header-section header-pengajar mt-0">
-                    <div class="flex-grow-1 mb-3 mb-md-0">
-                        <h2 class="fw-bold mb-2"><i class="fas fa-chalkboard-teacher me-2"></i>Rekapan Pengajar</h2>
-                        <div class="mode-toggle mt-2">
-                            <button class="btn-mode btn-mode-pengajar active" id="btnPengajarIndividu" onclick="ubahModePengajar('individu')"><i class="fas fa-user-clock me-2"></i>Riwayat Individu</button>
-                            <button class="btn-mode btn-mode-pengajar" id="btnPengajarPeriode" onclick="ubahModePengajar('periode')"><i class="fas fa-table me-2"></i>Detail Rekapan Periode</button>
+                
+                <!-- LAYAR KUNCI REKAPAN PENGAJAR -->
+                <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
+                    <div class="mb-4 mt-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fas fa-lock fs-2 text-warning"></i>
                         </div>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">Akses Terbatas</h4>
+                    <p class="text-muted mb-4">Silakan masukkan kode akses untuk membuka data rekapan.</p>
+                    <div class="d-flex justify-content-center mx-auto mb-3" style="max-width: 320px;">
+                        <input type="password" class="form-control form-control-modern text-center me-2 input-kode" placeholder="Masukkan Kode">
+                        <button class="btn btn-warning text-dark px-4 fw-bold rounded-3 btn-unlock" onclick="bukaAkses(this)">Buka</button>
+                    </div>
+                    <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
+                </div>
+
+                <!-- KONTEN ASLI (Sembunyi sebelum dibuka kuncinya) -->
+                <div class="secured-content d-none">
+                    <div class="header-section header-pengajar mt-0">
+                        <div class="flex-grow-1 mb-3 mb-md-0">
+                            <h2 class="fw-bold mb-2"><i class="fas fa-chalkboard-teacher me-2"></i>Rekapan Pengajar</h2>
+                            <div class="mode-toggle mt-2">
+                                <button class="btn-mode btn-mode-pengajar active" id="btnPengajarIndividu" onclick="ubahModePengajar('individu')"><i class="fas fa-user-clock me-2"></i>Riwayat Individu</button>
+                                <button class="btn-mode btn-mode-pengajar" id="btnPengajarPeriode" onclick="ubahModePengajar('periode')"><i class="fas fa-table me-2"></i>Detail Rekapan Periode</button>
+                            </div>
+                        </div>
+                        
+                        <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                            <select id="pilihPengajar" class="form-select w-100 text-warning">
+                                <option value="">Memuat data...</option>
+                            </select>
+                            <div class="d-flex gap-2 w-100 mt-1">
+                                <div class="w-50">
+                                    <span class="date-filter-label">Dari Tanggal:</span>
+                                    <input type="date" id="startDatePengajar" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                                <div class="w-50">
+                                    <span class="date-filter-label">Sampai Tanggal:</span>
+                                    <input type="date" id="endDatePengajar" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                            </div>
+                            <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
+                        </div>
+
+                        <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
+                            <select id="pilihCabang" class="form-select w-100 text-warning">
+                                <option value="">-- Semua Cabang/Bagian --</option>
+                            </select>
+                            <div class="d-flex gap-2 w-100 mt-1">
+                                <div class="w-50">
+                                    <span class="date-filter-label">Dari Tanggal:</span>
+                                    <input type="date" id="startDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                                <div class="w-50">
+                                    <span class="date-filter-label">Sampai Tanggal:</span>
+                                    <input type="date" id="endDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                            </div>
+                            <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk memuat SEMUA data</small>
+                        </div>
+                    </div>
+
+                    <div id="pesanPilihPengajar" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
+                        <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
+                        <h5 class="fw-bold text-muted">Silakan Cari Pengajar</h5>
                     </div>
                     
-                    <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <select id="pilihPengajar" class="form-select w-100 text-warning">
-                            <option value="">Memuat data...</option>
-                        </select>
-                        <div class="d-flex gap-2 w-100 mt-1">
-                            <div class="w-50">
-                                <span class="date-filter-label">Dari Tanggal:</span>
-                                <input type="date" id="startDatePengajar" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                            <div class="w-50">
-                                <span class="date-filter-label">Sampai Tanggal:</span>
-                                <input type="date" id="endDatePengajar" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                        </div>
-                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
-                    </div>
-
-                    <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <select id="pilihCabang" class="form-select w-100 text-warning">
-                            <option value="">-- Semua Cabang/Bagian --</option>
-                        </select>
-                        <div class="d-flex gap-2 w-100 mt-1">
-                            <div class="w-50">
-                                <span class="date-filter-label">Dari Tanggal:</span>
-                                <input type="date" id="startDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                            <div class="w-50">
-                                <span class="date-filter-label">Sampai Tanggal:</span>
-                                <input type="date" id="endDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                        </div>
-                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk memuat SEMUA data</small>
-                    </div>
+                    <div id="areaRekapanPengajar" class="row"></div>
+                    <div id="areaRekapanPeriode" class="row d-none"></div>
                 </div>
-
-                <div id="pesanPilihPengajar" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
-                    <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
-                    <h5 class="fw-bold text-muted">Silakan Cari Pengajar</h5>
-                </div>
-                
-                <div id="areaRekapanPengajar" class="row"></div>
-                <div id="areaRekapanPeriode" class="row d-none"></div>
 
             </div>
 
@@ -229,6 +270,42 @@
         let globalData = [];
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
+
+        // ==========================================
+        // SISTEM KODE AKSES RAHASIA
+        // ==========================================
+        // Anda bisa mengganti kode 'admin123' di bawah ini dengan kata sandi yang Anda inginkan
+        const KODE_RAHASIA = "admin123"; 
+
+        function bukaAkses(btn) {
+            let container = $(btn).closest('.lock-screen');
+            let inputVal = container.find('.input-kode').val();
+            let errorMsg = container.find('.error-kode');
+
+            if(inputVal === KODE_RAHASIA) {
+                // Jika benar, buka semua tab yang dikunci secara bersamaan
+                $('.lock-screen').fadeOut(300, function() {
+                    $(this).addClass('d-none');
+                    $('.secured-content').removeClass('d-none').hide().fadeIn(400);
+                });
+            } else {
+                // Jika salah, tampilkan pesan error merah
+                errorMsg.removeClass('d-none');
+                container.find('.input-kode').css('border-color', '#ef4444');
+                setTimeout(() => {
+                    errorMsg.addClass('d-none');
+                    container.find('.input-kode').css('border-color', '');
+                }, 3000);
+            }
+        }
+
+        // Fitur tekan tombol "Enter" pada keyboard untuk submit password
+        $(document).on('keypress', '.input-kode', function (e) {
+            if (e.which == 13) {
+                bukaAkses(this);
+            }
+        });
+
 
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -562,7 +639,6 @@
                 }
             });
 
-            // Urutkan berdasarkan: Nama Pengajar -> Tanggal Pelaksanaan -> Jam Mengajar
             detailedSessions.sort((a, b) => {
                 if (a.namaPengajar < b.namaPengajar) return -1;
                 if (a.namaPengajar > b.namaPengajar) return 1;
@@ -570,9 +646,7 @@
                     let diff = a.tanggalObj.getTime() - b.tanggalObj.getTime();
                     if (diff !== 0) return diff;
                 }
-                if (a.waktuMinutes && b.waktuMinutes) {
-                    return a.waktuMinutes.start - b.waktuMinutes.start;
-                }
+                if (a.waktuMinutes && b.waktuMinutes) return a.waktuMinutes.start - b.waktuMinutes.start;
                 return 0;
             });
 
@@ -584,8 +658,6 @@
 
             detailedSessions.forEach((sesi) => {
                 let sessionDateStr = sesi.tanggalAsli;
-
-                // Reset perhitungan Sesi Ke jika Nama Pengajar berganti ATAU Tanggalnya berganti
                 if (sesi.namaPengajar !== currentTeacher || sessionDateStr !== currentDateStr) {
                     currentTeacher = sesi.namaPengajar;
                     currentDateStr = sessionDateStr;
