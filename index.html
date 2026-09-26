@@ -60,7 +60,6 @@
         .mapel-table td { padding: 0.5rem 0.6rem; font-size: 0.75rem; vertical-align: middle; }
         .collapse-icon { transition: transform 0.3s ease; }
         .collapsed .collapse-icon { transform: rotate(-90deg); }
-        .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
 
         .select2-container--default .select2-selection--single {
             border-radius: 16px !important; border: 2px solid transparent !important; height: auto !important; padding: 0.6rem 0.5rem !important;
@@ -72,6 +71,10 @@
         .select2-search__field { border-radius: 8px !important; padding: 0.5rem !important; }
         .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { background-color: #4f46e5 !important; }
         .select2-pengajar-active .select2-results__option--highlighted { background-color: #f59e0b !important; }
+        
+        /* Modifikasi border tabel rekapan periode */
+        .table-periode th, .table-periode td { border: 1px solid #e2e8f0; }
+        .table-periode thead th { background-color: #f1f5f9; color: #334155; }
     </style>
 </head>
 <body>
@@ -147,7 +150,6 @@
                                 <input type="date" id="endDateKelas" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
                             </div>
                         </div>
-                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
                     </div>
                 </div>
                 <div id="pesanPilihKelas" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
@@ -162,14 +164,12 @@
                 <div class="header-section header-pengajar mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
                         <h2 class="fw-bold mb-2"><i class="fas fa-chalkboard-teacher me-2"></i>Rekapan Pengajar</h2>
-                        <!-- Tombol Toggle Mode Pengajar -->
                         <div class="mode-toggle mt-2">
                             <button class="btn-mode btn-mode-pengajar active" id="btnPengajarIndividu" onclick="ubahModePengajar('individu')"><i class="fas fa-user-clock me-2"></i>Riwayat Individu</button>
-                            <button class="btn-mode btn-mode-pengajar" id="btnPengajarPeriode" onclick="ubahModePengajar('periode')"><i class="fas fa-chart-bar me-2"></i>Rekapan Total Periode</button>
+                            <button class="btn-mode btn-mode-pengajar" id="btnPengajarPeriode" onclick="ubahModePengajar('periode')"><i class="fas fa-table me-2"></i>Detail Rekapan Periode</button>
                         </div>
                     </div>
                     
-                    <!-- Filter Mode 1: Riwayat Individu -->
                     <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
                         <select id="pilihPengajar" class="form-select w-100 text-warning">
                             <option value="">Memuat data...</option>
@@ -187,7 +187,6 @@
                         <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
                     </div>
 
-                    <!-- Filter Mode 2: Rekapan Periode -->
                     <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
                         <select id="pilihCabang" class="form-select w-100 text-warning">
                             <option value="">-- Semua Cabang/Bagian --</option>
@@ -202,17 +201,15 @@
                                 <input type="date" id="endDatePeriode" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
                             </div>
                         </div>
-                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk memuat SEMUA data pengajar</small>
+                        <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk memuat SEMUA data</small>
                     </div>
                 </div>
 
-                <!-- Tampilan Pesan Kosong (Mode Individu) -->
                 <div id="pesanPilihPengajar" class="alert alert-light shadow-sm rounded-4 border py-5 text-center">
                     <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
                     <h5 class="fw-bold text-muted">Silakan Cari Pengajar</h5>
                 </div>
                 
-                <!-- Area Tampilan Hasil Filter -->
                 <div id="areaRekapanPengajar" class="row"></div>
                 <div id="areaRekapanPeriode" class="row d-none"></div>
 
@@ -288,8 +285,6 @@
                 $('#areaRekapanPeriode').removeClass('d-none');
                 $('#pesanPilihPengajar').addClass('d-none');
                 
-                // Sengaja memanggil render langsung tanpa butuh klik apa-apa 
-                // Jika tanggal kosong, otomatis menampilkan semua data sepanjang waktu
                 renderRekapanPeriode();
             }
         }
@@ -298,9 +293,6 @@
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
             $('#pilihTanggal').val(todayFormatted);
-            
-            // Catatan: Tanggal untuk filter Rekapan Periode sengaja dibiarkan KOSONG 
-            // agar saat dibuka, langsung memuat seluruh riwayat data.
 
             Papa.parse(sheetUrl, {
                 download: true,
@@ -312,14 +304,12 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Dropdown Kelas
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
                     kelasUnik = kelasUnik.filter(k => k !== '').sort();
                     let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
                     kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
                     $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
 
-                    // Dropdown Pengajar Individu
                     let pengajarSet = new Set();
                     globalData.forEach(row => {
                         if(row['PENGAJAR']) {
@@ -334,7 +324,6 @@
                     [...pengajarSet].sort().forEach(p => { opsiPengajar += `<option value="${p}">${p}</option>`; });
                     $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    // Dropdown Cabang/Bagian
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
@@ -406,7 +395,7 @@
                     tbodyHtml += `<tr class="${rowClass}">
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
                         <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
+                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
                         <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
                     </tr>`;
                 });
@@ -495,7 +484,7 @@
                     tbodyHtml += `<tr class="${rowClass}">
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
                         <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic">Belum diisi</span>'}</div></td>
+                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
                         <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
                     </tr>`;
                 });
@@ -522,7 +511,7 @@
         $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
-        // RENDER REKAPAN PENGAJAR (TOTAL PERIODE)
+        // RENDER REKAPAN PENGAJAR (TOTAL PERIODE / DETAIL LOG)
         // ==========================================
         function renderRekapanPeriode() {
             let selectedCabang = $('#pilihCabang').val();
@@ -538,8 +527,6 @@
 
             let dataFiltered = globalData.filter(row => {
                 if(selectedCabang && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedCabang)) return false;
-                
-                // Jika tanggal dikosongkan, bypass filter tanggal (Tampilkan Semua Waktu)
                 if(!startObj && !endObj) return true; 
 
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
@@ -554,55 +541,76 @@
                 return;
             }
 
-            let stats = {};
+            // Memecah baris jika ada nama guru lebih dari satu agar masuk list individu
+            let detailedSessions = [];
             dataFiltered.forEach(row => {
                 if(row['PENGAJAR']) {
                     let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                     namaPecah.forEach(nama => {
                         if(nama !== '' && nama.toLowerCase() !== 'cancel' && nama !== '-') {
-                            if(!stats[nama]) stats[nama] = { total: 0, mapel: new Set(), cabang: new Set() };
-                            stats[nama].total += 1;
-                            if(row['MAPEL']) stats[nama].mapel.add(row['MAPEL'].trim());
-                            if(row['CBG/BAG']) stats[nama].cabang.add(row['CBG/BAG'].trim());
+                            detailedSessions.push({
+                                namaPengajar: nama,
+                                mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
+                                materi: row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '<span class="fst-italic text-muted">Belum diisi</span>',
+                                kelas: row['KELAS'] ? row['KELAS'].trim() : '-',
+                                tanggalObj: parseDateFromCSV(row['Hari Tanggal'])
+                            });
                         }
                     });
                 }
             });
 
-            let sortedStats = Object.keys(stats).map(k => ({nama: k, ...stats[k]})).sort((a,b) => b.total - a.total);
+            // Urutkan berdasarkan Nama Pengajar, lalu Tanggal Pelaksanaan
+            detailedSessions.sort((a, b) => {
+                if (a.namaPengajar < b.namaPengajar) return -1;
+                if (a.namaPengajar > b.namaPengajar) return 1;
+                if (a.tanggalObj && b.tanggalObj) return a.tanggalObj - b.tanggalObj;
+                return 0;
+            });
 
             let tbody = "";
-            sortedStats.forEach((st, idx) => {
-                let mapelList = Array.from(st.mapel).slice(0, 3).join(', ') + (st.mapel.size > 3 ? '...' : '');
-                let cabangList = Array.from(st.cabang).join(', ');
-                
+            let currentTeacher = "";
+            let sesiKe = 0;
+            let overallNo = 1;
+
+            detailedSessions.forEach((sesi) => {
+                if (sesi.namaPengajar !== currentTeacher) {
+                    currentTeacher = sesi.namaPengajar;
+                    sesiKe = 1;
+                } else {
+                    sesiKe++;
+                }
+
                 tbody += `
                     <tr>
-                        <td class="text-center fw-bold text-muted">${idx + 1}</td>
-                        <td class="fw-bold text-dark" style="font-size: 1.05rem;">${st.nama}</td>
-                        <td><span class="badge bg-light text-secondary border px-2 py-1">${cabangList || '-'}</span></td>
-                        <td class="text-muted" style="font-size: 0.85rem;">${mapelList || '-'}</td>
-                        <td class="text-center fw-bold text-success fs-5">${st.total}</td>
+                        <td class="text-center text-muted">${overallNo}</td>
+                        <td class="fw-bold text-dark text-nowrap">${sesi.namaPengajar}</td>
+                        <td><span class="badge bg-primary text-white bg-opacity-75">${sesi.mapel}</span></td>
+                        <td style="max-width: 300px;">${sesi.materi}</td>
+                        <td><span class="badge border border-secondary text-secondary">${sesi.kelas}</span></td>
+                        <td class="text-center fw-bold text-success fs-6">${sesiKe}</td>
                     </tr>
                 `;
+                overallNo++;
             });
 
             let tableHtml = `
                 <div class="col-12">
                     <div class="group-card p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list-ol text-warning me-2"></i>Peringkat Beban Mengajar (${!startObj && !endObj ? 'Semua Waktu' : 'Periode Terpilih'})</h5>
-                            <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${sortedStats.length} Pengajar Aktif</span>
+                            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list text-warning me-2"></i>Detail Log Sesi Mengajar</h5>
+                            <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${overallNo - 1} Total Sesi Terekap</span>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
+                            <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
+                                <thead class="text-center">
                                     <tr>
-                                        <th class="text-center" width="5%">No</th>
-                                        <th width="25%">Nama Pengajar</th>
-                                        <th width="20%">Cabang / Bagian</th>
-                                        <th width="35%">Mata Pelajaran / Agenda (Contoh)</th>
-                                        <th class="text-center" width="15%">Total Sesi</th>
+                                        <th width="5%">No</th>
+                                        <th width="20%">Nama Pengajar</th>
+                                        <th width="15%">Mapel</th>
+                                        <th width="35%">Materi</th>
+                                        <th width="15%">Kelas</th>
+                                        <th width="10%">Sesi Ke</th>
                                     </tr>
                                 </thead>
                                 <tbody>
