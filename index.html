@@ -60,6 +60,7 @@
         .mapel-table td { padding: 0.5rem 0.6rem; font-size: 0.75rem; vertical-align: middle; }
         .collapse-icon { transition: transform 0.3s ease; }
         .collapsed .collapse-icon { transform: rotate(-90deg); }
+        .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
 
         .select2-container--default .select2-selection--single {
             border-radius: 16px !important; border: 2px solid transparent !important; height: auto !important; padding: 0.6rem 0.5rem !important;
@@ -72,7 +73,6 @@
         .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { background-color: #4f46e5 !important; }
         .select2-pengajar-active .select2-results__option--highlighted { background-color: #f59e0b !important; }
         
-        /* Modifikasi border tabel rekapan periode */
         .table-periode th, .table-periode td { border: 1px solid #e2e8f0; }
         .table-periode thead th { background-color: #f1f5f9; color: #334155; }
     </style>
@@ -511,7 +511,7 @@
         $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
-        // RENDER REKAPAN PENGAJAR (TOTAL PERIODE / DETAIL LOG)
+        // RENDER REKAPAN PENGAJAR (DETAIL PERIODE DENGAN SESI HARIAN)
         // ==========================================
         function renderRekapanPeriode() {
             let selectedCabang = $('#pilihCabang').val();
@@ -541,7 +541,6 @@
                 return;
             }
 
-            // Memecah baris jika ada nama guru lebih dari satu agar masuk list individu
             let detailedSessions = [];
             dataFiltered.forEach(row => {
                 if(row['PENGAJAR']) {
@@ -553,29 +552,43 @@
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materi: row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '<span class="fst-italic text-muted">Belum diisi</span>',
                                 kelas: row['KELAS'] ? row['KELAS'].trim() : '-',
-                                tanggalObj: parseDateFromCSV(row['Hari Tanggal'])
+                                tanggalObj: parseDateFromCSV(row['Hari Tanggal']),
+                                tanggalAsli: row['Hari Tanggal'] || '-',
+                                waktuAsli: row['WAKTU'] || '-',
+                                waktuMinutes: parseWaktuToMinutes(row['WAKTU'] || "")
                             });
                         }
                     });
                 }
             });
 
-            // Urutkan berdasarkan Nama Pengajar, lalu Tanggal Pelaksanaan
+            // Urutkan berdasarkan: Nama Pengajar -> Tanggal Pelaksanaan -> Jam Mengajar
             detailedSessions.sort((a, b) => {
                 if (a.namaPengajar < b.namaPengajar) return -1;
                 if (a.namaPengajar > b.namaPengajar) return 1;
-                if (a.tanggalObj && b.tanggalObj) return a.tanggalObj - b.tanggalObj;
+                if (a.tanggalObj && b.tanggalObj) {
+                    let diff = a.tanggalObj.getTime() - b.tanggalObj.getTime();
+                    if (diff !== 0) return diff;
+                }
+                if (a.waktuMinutes && b.waktuMinutes) {
+                    return a.waktuMinutes.start - b.waktuMinutes.start;
+                }
                 return 0;
             });
 
             let tbody = "";
             let currentTeacher = "";
+            let currentDateStr = "";
             let sesiKe = 0;
             let overallNo = 1;
 
             detailedSessions.forEach((sesi) => {
-                if (sesi.namaPengajar !== currentTeacher) {
+                let sessionDateStr = sesi.tanggalAsli;
+
+                // Reset perhitungan Sesi Ke jika Nama Pengajar berganti ATAU Tanggalnya berganti
+                if (sesi.namaPengajar !== currentTeacher || sessionDateStr !== currentDateStr) {
                     currentTeacher = sesi.namaPengajar;
+                    currentDateStr = sessionDateStr;
                     sesiKe = 1;
                 } else {
                     sesiKe++;
@@ -584,7 +597,10 @@
                 tbody += `
                     <tr>
                         <td class="text-center text-muted">${overallNo}</td>
-                        <td class="fw-bold text-dark text-nowrap">${sesi.namaPengajar}</td>
+                        <td>
+                            <div class="fw-bold text-dark text-nowrap">${sesi.namaPengajar}</div>
+                            <div style="font-size: 0.75rem;" class="text-muted mt-1"><i class="far fa-calendar-alt me-1"></i>${sesi.tanggalAsli} &nbsp;|&nbsp; <i class="far fa-clock me-1"></i>${sesi.waktuAsli}</div>
+                        </td>
                         <td><span class="badge bg-primary text-white bg-opacity-75">${sesi.mapel}</span></td>
                         <td style="max-width: 300px;">${sesi.materi}</td>
                         <td><span class="badge border border-secondary text-secondary">${sesi.kelas}</span></td>
@@ -606,7 +622,7 @@
                                 <thead class="text-center">
                                     <tr>
                                         <th width="5%">No</th>
-                                        <th width="20%">Nama Pengajar</th>
+                                        <th width="20%">Nama Pengajar & Waktu</th>
                                         <th width="15%">Mapel</th>
                                         <th width="35%">Materi</th>
                                         <th width="15%">Kelas</th>
