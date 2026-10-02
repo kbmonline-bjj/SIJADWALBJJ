@@ -383,7 +383,7 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Setup Bagian / Cabang Global Dropdowns
+                    // Setup Bagian / Cabang Dropdowns
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
@@ -391,6 +391,10 @@
                     
                     $('#pilihBagianHarian, #pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+
+                    // SET DEFAULT CABANG KE "Bag. Online"
+                    let defaultOnline = cabangUnik.find(c => c.trim().toLowerCase() === 'bag. online' || c.trim().toLowerCase().includes('online')) || 'Bag. Online';
+                    $('#pilihBagianHarian, #pilihBagianKelas, #pilihBagianPengajar, #pilihCabangPeriode').val(defaultOnline).trigger('change.select2');
 
                     // Dropdown Kelas
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
