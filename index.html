@@ -368,6 +368,35 @@
             }
         }
 
+        // ==========================================
+        // FUNGSI UPDATE DROPDOWN KELAS & PENGAJAR (CHAINING)
+        // ==========================================
+        function updateKelasDropdown(bagian) {
+            let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
+            let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
+            let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
+            kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
+            $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
+        }
+
+        function updatePengajarDropdown(bagian) {
+            let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
+            let pengajarSet = new Set();
+            dataFiltered.forEach(row => {
+                if(row['PENGAJAR']) {
+                    let namaPecah = row['PENGAJAR'].split(',');
+                    namaPecah.forEach(nama => {
+                        let bersih = nama.trim();
+                        if(bersih !== '' && bersih.toLowerCase() !== 'cancel' && bersih !== '-') pengajarSet.add(bersih);
+                    });
+                }
+            });
+            let opsiPengajar = '<option value="">-- Cari Pengajar --</option>';
+            [...pengajarSet].sort().forEach(p => { opsiPengajar += `<option value="${p}">${p}</option>`; });
+            $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+        }
+
+
         $(document).ready(function() {
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
@@ -390,40 +419,32 @@
                     cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
                     
                     $('#pilihBagianHarian').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
-                    
-                    // Set Default "Bag. Online" untuk Rekapan Kelas & Pengajar jika data memilikinya
                     $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    $('#pilihBagianKelas').val("Bag. Online").trigger('change');
-                    $('#pilihBagianPengajar').val("Bag. Online").trigger('change');
-                    $('#pilihCabangPeriode').val("Bag. Online").trigger('change');
-
-                    // Dropdown Kelas
-                    let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
-                    kelasUnik = kelasUnik.filter(k => k !== '').sort();
-                    let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
-                    kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
-                    $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
-
-                    // Dropdown Pengajar Individu
-                    let pengajarSet = new Set();
-                    globalData.forEach(row => {
-                        if(row['PENGAJAR']) {
-                            let namaPecah = row['PENGAJAR'].split(',');
-                            namaPecah.forEach(nama => {
-                                let bersih = nama.trim();
-                                if(bersih !== '' && bersih.toLowerCase() !== 'cancel' && bersih !== '-') pengajarSet.add(bersih);
-                            });
-                        }
-                    });
-                    let opsiPengajar = '<option value="">-- Cari Pengajar --</option>';
-                    [...pengajarSet].sort().forEach(p => { opsiPengajar += `<option value="${p}">${p}</option>`; });
-                    $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+                    // Default "Bag. Online" Trigger
+                    $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
+                    $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
+                    $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
+                    
+                    // Build initial dropdowns
+                    updateKelasDropdown("Bag. Online");
+                    updatePengajarDropdown("Bag. Online");
 
                     renderPantauanHarian();
                 }
             });
+        });
+
+        // Trigger Event Update Dropdown Saat Bagian Diubah
+        $('#pilihBagianKelas').on('change', function() {
+            updateKelasDropdown($(this).val());
+            renderRekapanKelas();
+        });
+
+        $('#pilihBagianPengajar').on('change', function() {
+            updatePengajarDropdown($(this).val());
+            renderRekapanPengajar();
         });
 
         // ==========================================
@@ -529,7 +550,7 @@
             });
             areaRekapan.html(htmlOutput);
         }
-        $('#pilihKelas, #pilihBagianKelas, #startDateKelas, #endDateKelas').on('change', renderRekapanKelas);
+        $('#pilihKelas, #startDateKelas, #endDateKelas').on('change', renderRekapanKelas);
 
         // ==========================================
         // RENDER REKAPAN PENGAJAR (INDIVIDU)
@@ -637,7 +658,7 @@
             });
             areaRekapan.html(htmlOutput);
         }
-        $('#pilihPengajar, #pilihBagianPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
+        $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
         // RENDER REKAPAN PENGAJAR (DETAIL PERIODE)
