@@ -149,7 +149,7 @@
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
 
-                <!-- KONTEN ASLI (Sembunyi sebelum dibuka kuncinya) -->
+                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-rekapan mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
@@ -199,7 +199,7 @@
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
 
-                <!-- KONTEN ASLI (Sembunyi sebelum dibuka kuncinya) -->
+                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-pengajar mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
@@ -271,9 +271,7 @@
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
 
-        // ==========================================
-        // SISTEM KODE AKSES RAHASIA
-        // ==========================================
+        // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
 
         function bukaAkses(btn) {
@@ -425,12 +423,27 @@
             let endObj = endVal ? new Date(endVal) : null;
             if(endObj) endObj.setHours(23,59,59,999);
 
+            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+            let countSelesai = 0;
+            let countBelum = 0;
+            let totalSesiKeseluruhan = 0;
+
             let dataKelasIni = globalData.filter(row => {
                 if(!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
                 if(endObj && rowDate > endObj) return false;
+                
+                // Hitung Statistik
+                totalSesiKeseluruhan++;
+                rowDate.setHours(0,0,0,0);
+                if (rowDate < todayObj) {
+                    countSelesai++;
+                } else {
+                    countBelum++;
+                }
+
                 return true;
             });
 
@@ -446,8 +459,34 @@
                 return;
             }
 
-            let htmlOutput = ""; let mapelIndex = 0;
-            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+            // HTML Ringkasan Statistik
+            let statsHtml = `
+                <div class="col-12 mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-layer-group text-primary me-1"></i>Total Sesi Terekap</div>
+                                <h3 class="fw-bolder text-primary mb-0">${totalSesiKeseluruhan}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-check-circle text-secondary me-1"></i>Sudah Selesai</div>
+                                <h3 class="fw-bolder text-secondary mb-0">${countSelesai}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-hourglass-half text-success me-1"></i>Belum / Mendatang</div>
+                                <h3 class="fw-bolder text-success mb-0">${countBelum}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let htmlOutput = statsHtml; 
+            let mapelIndex = 0;
             
             Object.keys(mapelGroup).sort().forEach(mapel => {
                 let riwayat = mapelGroup[mapel];
@@ -511,6 +550,11 @@
             let endObj = endVal ? new Date(endVal) : null;
             if(endObj) endObj.setHours(23,59,59,999);
 
+            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+            let countSelesai = 0;
+            let countBelum = 0;
+            let totalSesiKeseluruhan = 0;
+
             let dataPengajarIni = globalData.filter(row => {
                 if(!row['PENGAJAR']) return false;
                 let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
@@ -520,6 +564,16 @@
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
                 if(endObj && rowDate > endObj) return false;
+
+                // Hitung Statistik
+                totalSesiKeseluruhan++;
+                rowDate.setHours(0,0,0,0);
+                if (rowDate < todayObj) {
+                    countSelesai++;
+                } else {
+                    countBelum++;
+                }
+
                 return true;
             });
 
@@ -535,8 +589,34 @@
                 return;
             }
 
-            let htmlOutput = ""; let mapelIndex = 0;
-            let todayObj = new Date(); todayObj.setHours(0,0,0,0);
+            // HTML Ringkasan Statistik
+            let statsHtml = `
+                <div class="col-12 mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-layer-group text-warning me-1"></i>Total Mengajar Terekap</div>
+                                <h3 class="fw-bolder text-warning mb-0" style="color: #d97706 !important;">${totalSesiKeseluruhan}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-check-circle text-secondary me-1"></i>Sudah Selesai</div>
+                                <h3 class="fw-bolder text-secondary mb-0">${countSelesai}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100">
+                                <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-hourglass-half text-success me-1"></i>Belum / Mendatang</div>
+                                <h3 class="fw-bolder text-success mb-0">${countBelum}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let htmlOutput = statsHtml; 
+            let mapelIndex = 0;
             
             Object.keys(mapelGroup).sort().forEach(mapel => {
                 let riwayat = mapelGroup[mapel];
@@ -582,7 +662,7 @@
         $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
-        // RENDER REKAPAN PENGAJAR (DETAIL PERIODE)
+        // RENDER REKAPAN PENGAJAR (DETAIL PERIODE DENGAN SESI HARIAN)
         // ==========================================
         function renderRekapanPeriode() {
             let selectedCabang = $('#pilihCabang').val();
@@ -751,7 +831,6 @@
                             else if (currentMinutes >= waktuParsed.start && currentMinutes <= waktuParsed.end) { statusHtml = '<span class="badge-live ms-2"><i class="fas fa-broadcast-tower me-1"></i>LIVE</span>'; itemClass = "item-live"; }
                         }
                         
-                        // Ekstraksi Materi dan Folder untuk Pantauan Harian
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         
@@ -808,7 +887,6 @@
                         if (studio !== '-' && studio !== '' && studioCounts[studio] > 1) { isBentrok = true; adaBentrokGlobal = true; }
                         let itemClass = isGrupSelesai ? "item-selesai" : "";
                         
-                        // Ekstraksi Materi dan Folder untuk Pantauan Harian
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         
