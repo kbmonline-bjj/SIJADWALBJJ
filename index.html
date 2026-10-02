@@ -383,18 +383,21 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Setup Bagian / Cabang Dropdowns
+                    // Setup Bagian / Cabang Global Dropdowns
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
                     cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
                     
-                    $('#pilihBagianHarian, #pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
+                    $('#pilihBagianHarian').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
+                    
+                    // Set Default "Bag. Online" untuk Rekapan Kelas & Pengajar jika data memilikinya
+                    $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    // SET DEFAULT CABANG KE "Bag. Online"
-                    let defaultOnline = cabangUnik.find(c => c.trim().toLowerCase() === 'bag. online' || c.trim().toLowerCase().includes('online')) || 'Bag. Online';
-                    $('#pilihBagianHarian, #pilihBagianKelas, #pilihBagianPengajar, #pilihCabangPeriode').val(defaultOnline).trigger('change.select2');
+                    $('#pilihBagianKelas').val("Bag. Online").trigger('change');
+                    $('#pilihBagianPengajar').val("Bag. Online").trigger('change');
+                    $('#pilihCabangPeriode').val("Bag. Online").trigger('change');
 
                     // Dropdown Kelas
                     let kelasUnik = [...new Set(globalData.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))];
