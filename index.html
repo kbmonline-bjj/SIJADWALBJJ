@@ -383,7 +383,7 @@
         }
 
         // ==========================================
-        // FUNGSI UPDATE DROPDOWN KELAS & PENGAJAR (CHAINING)
+        // FUNGSI UPDATE DROPDOWN KELAS & PENGAJAR
         // ==========================================
         function updateKelasDropdown(bagian) {
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
@@ -441,7 +441,6 @@
                     $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                     $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
                     
-                    // Build initial dropdowns
                     updateKelasDropdown("Bag. Online");
                     updatePengajarDropdown("Bag. Online");
 
@@ -515,10 +514,9 @@
             `;
             
             let htmlOutput = statsHtml; 
-            let cardIndex = 0;
 
             if(modeRekapanKelas === 'mapel') {
-                // Pengelompokan Berdasarkan MAPEL
+                // Pengelompokan Berdasarkan MAPEL (Mode Asli / Card)
                 let mapelGroup = {};
                 dataKelasIni.forEach(row => {
                     let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Tanpa Mapel';
@@ -526,6 +524,7 @@
                     mapelGroup[mapel].push(row);
                 });
 
+                let mapelIndex = 0;
                 Object.keys(mapelGroup).sort().forEach(mapel => {
                     let riwayat = mapelGroup[mapel];
                     let tbodyHtml = "";
@@ -551,86 +550,89 @@
                     htmlOutput += `
                         <div class="col-md-6 col-lg-4 mb-3">
                             <div class="mapel-card">
-                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseKelas${cardIndex}">
+                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseKelas${mapelIndex}">
                                     <div class="d-flex align-items-center w-100">
                                         <i class="fas fa-book text-success me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
                                         <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
                                     </div>
                                 </div>
-                                <div id="collapseKelas${cardIndex}" class="collapse">
+                                <div id="collapseKelas${mapelIndex}" class="collapse">
                                     <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                                 </div>
                             </div>
                         </div>
                     `;
-                    cardIndex++;
+                    mapelIndex++;
                 });
 
             } else {
-                // Pengelompokan Berdasarkan TANGGAL DAN JAM
-                let waktuGroup = {};
-                dataKelasIni.forEach(row => {
-                    let tgl = row['Hari Tanggal'] ? row['Hari Tanggal'].trim() : 'Tanpa Tanggal';
-                    if(!waktuGroup[tgl]) waktuGroup[tgl] = [];
-                    waktuGroup[tgl].push(row);
-                });
-
-                let sortedDates = Object.keys(waktuGroup).sort((a, b) => {
-                    if (a === 'Tanpa Tanggal') return 1;
-                    if (b === 'Tanpa Tanggal') return -1;
-                    let dateA = parseDateFromCSV(a);
-                    let dateB = parseDateFromCSV(b);
-                    return dateA && dateB ? dateA.getTime() - dateB.getTime() : 0;
-                });
-
-                sortedDates.forEach(tgl => {
-                    let riwayat = waktuGroup[tgl];
-                    let tbodyHtml = "";
-
-                    riwayat.sort((a,b) => {
-                        let wa = parseWaktuToMinutes(a['WAKTU']);
-                        let wb = parseWaktuToMinutes(b['WAKTU']);
-                        if(wa && wb) return wa.start - wb.start;
-                        return 0;
-                    });
+                // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
+                dataKelasIni.sort((a, b) => {
+                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                    let timeA = dateA ? dateA.getTime() : Number.MAX_SAFE_INTEGER; 
+                    let timeB = dateB ? dateB.getTime() : Number.MAX_SAFE_INTEGER;
                     
-                    let dateObj = parseDateFromCSV(tgl);
-                    let statusBadge = ""; let cardBorder = "";
+                    if (timeA !== timeB) return timeA - timeB; // Sort by Date Ascending
+                    
+                    // Sort by Time Ascending
+                    let minA = parseWaktuToMinutes(a['WAKTU']);
+                    let minB = parseWaktuToMinutes(b['WAKTU']);
+                    let startA = minA ? minA.start : Number.MAX_SAFE_INTEGER;
+                    let startB = minB ? minB.start : Number.MAX_SAFE_INTEGER;
+                    return startA - startB;
+                });
+
+                let tbodyHtml = "";
+                let noUrut = 1;
+
+                dataKelasIni.forEach(sesi => {
+                    let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                    let statusBadge = ""; let rowClass = "";
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
-                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 ms-2" style="font-size:0.6rem;">Selesai</span>'; }
-                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success ms-2" style="font-size:0.6rem;">Hari Ini</span>'; cardBorder = "border-success border-2"; }
+                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 ms-2" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success ms-2" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
                         else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
-                    riwayat.forEach(sesi => {
-                        tbodyHtml += `<tr>
-                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                            <td><div class="fw-bold text-dark" style="font-size:0.8rem;">${sesi['MAPEL'] || '-'}</div></td>
-                            <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
-                            <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
-                        </tr>`;
-                    });
+                    tbodyHtml += `<tr class="${rowClass}">
+                        <td class="text-center text-muted fw-bold">${noUrut++}</td>
+                        <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
+                        <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                        <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
+                        <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                        <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
+                    </tr>`;
+                });
 
-                    htmlOutput += `
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="mapel-card ${cardBorder}">
-                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseWaktu${cardIndex}">
-                                    <div class="d-flex align-items-center w-100">
-                                        <i class="far fa-calendar-alt text-primary me-2"></i> 
-                                        <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${tgl}</span>
-                                        ${statusBadge}
-                                        <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
-                                    </div>
-                                </div>
-                                <div id="collapseWaktu${cardIndex}" class="collapse">
-                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 20%;">Jam</th><th style="width: 25%;">Mapel</th><th style="width: 30%;">Materi</th><th style="width: 25%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
-                                </div>
+                htmlOutput += `
+                    <div class="col-12">
+                        <div class="group-card p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                <h5 class="fw-bold text-dark mb-0"><i class="far fa-calendar-alt text-primary me-2"></i>Riwayat Kelas Berdasarkan Waktu</h5>
+                                <span class="badge bg-primary text-white fs-6 rounded-pill px-3 py-2 shadow-sm">${dataKelasIni.length} Total Sesi</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
+                                    <thead class="text-center">
+                                        <tr>
+                                            <th width="5%">No</th>
+                                            <th width="20%">Tanggal</th>
+                                            <th width="15%">Jam</th>
+                                            <th width="20%">Mapel</th>
+                                            <th width="25%">Materi</th>
+                                            <th width="15%">Pengajar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tbodyHtml}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    `;
-                    cardIndex++;
-                });
+                    </div>
+                `;
             }
 
             areaRekapan.html(htmlOutput);
