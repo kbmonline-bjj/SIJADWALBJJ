@@ -51,6 +51,7 @@
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .btn-mode-pengajar.active { color: #d97706 !important; }
+        .btn-mode-pengajar-sub.active { color: #d97706 !important; }
         .btn-mode-kelas.active { color: #059669 !important; }
 
         .cursor-pointer { cursor: pointer; }
@@ -111,7 +112,7 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- TAB 1: PANTAUAN HARIAN (Tanpa Kunci) -->
+            <!-- TAB 1: PANTAUAN HARIAN -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
@@ -136,8 +137,6 @@
 
             <!-- TAB 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
-                
-                <!-- LAYAR KUNCI REKAPAN KELAS -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -152,13 +151,10 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
-
-                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-rekapan mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
                             <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
-                            <!-- Tombol Toggle Mode Rekapan Kelas -->
                             <div class="mode-toggle mt-2">
                                 <button class="btn-mode btn-mode-kelas active" id="btnRekapanMapel" onclick="ubahModeRekapanKelas('mapel')"><i class="fas fa-book me-2"></i>Berdasarkan Mapel</button>
                                 <button class="btn-mode btn-mode-kelas" id="btnRekapanWaktu" onclick="ubahModeRekapanKelas('waktu')"><i class="far fa-calendar-alt me-2"></i>Berdasarkan Waktu</button>
@@ -193,8 +189,6 @@
 
             <!-- TAB 3: REKAPAN PENGAJAR -->
             <div class="tab-pane fade" id="pengajar" role="tabpanel">
-                
-                <!-- LAYAR KUNCI REKAPAN PENGAJAR -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -209,8 +203,6 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
-
-                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-pengajar mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
@@ -223,6 +215,12 @@
                         
                         <!-- Filter Mode 1: Individu -->
                         <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                            <!-- SUB-TOGGLE: Mapel vs Waktu -->
+                            <div class="mode-toggle align-self-start mb-1" style="background: rgba(255,255,255,0.15);">
+                                <button class="btn-mode btn-mode-pengajar-sub active" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" id="btnPengajarMapel" onclick="ubahModePengajarSub('mapel')"><i class="fas fa-book me-1"></i>Mapel</button>
+                                <button class="btn-mode btn-mode-pengajar-sub" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" id="btnPengajarWaktu" onclick="ubahModePengajarSub('waktu')"><i class="far fa-calendar-alt me-1"></i>Waktu</button>
+                            </div>
+                            
                             <select id="pilihBagianPengajar" class="form-select w-100 text-warning">
                                 <option value="">Semua Cabang / Bagian</option>
                             </select>
@@ -286,7 +284,8 @@
         let globalData = [];
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
-        let modeRekapanKelas = 'mapel'; // Status mode Tab Rekapan Kelas
+        let modeRekapanKelas = 'mapel'; 
+        let modeRekapanPengajar = 'mapel'; // Status mode Tab Pengajar Individu
 
         // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
@@ -382,9 +381,14 @@
             }
         }
 
-        // ==========================================
-        // FUNGSI UPDATE DROPDOWN KELAS & PENGAJAR
-        // ==========================================
+        function ubahModePengajarSub(mode) {
+            modeRekapanPengajar = mode;
+            $('#btnPengajarMapel, #btnPengajarWaktu').removeClass('active');
+            if(mode === 'mapel') $('#btnPengajarMapel').addClass('active');
+            else $('#btnPengajarWaktu').addClass('active');
+            renderRekapanPengajar();
+        }
+
         function updateKelasDropdown(bagian) {
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
@@ -426,7 +430,6 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Setup Bagian / Cabang Global Dropdowns
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
@@ -436,7 +439,6 @@
                     $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    // Default "Bag. Online" Trigger
                     $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                     $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                     $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
@@ -516,7 +518,6 @@
             let htmlOutput = statsHtml; 
 
             if(modeRekapanKelas === 'mapel') {
-                // Pengelompokan Berdasarkan MAPEL (Mode Asli / Card)
                 let mapelGroup = {};
                 dataKelasIni.forEach(row => {
                     let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Tanpa Mapel';
@@ -566,16 +567,12 @@
                 });
 
             } else {
-                // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
                 dataKelasIni.sort((a, b) => {
                     let dateA = parseDateFromCSV(a['Hari Tanggal']);
                     let dateB = parseDateFromCSV(b['Hari Tanggal']);
                     let timeA = dateA ? dateA.getTime() : Number.MAX_SAFE_INTEGER; 
                     let timeB = dateB ? dateB.getTime() : Number.MAX_SAFE_INTEGER;
-                    
-                    if (timeA !== timeB) return timeA - timeB; // Sort by Date Ascending
-                    
-                    // Sort by Time Ascending
+                    if (timeA !== timeB) return timeA - timeB; 
                     let minA = parseWaktuToMinutes(a['WAKTU']);
                     let minB = parseWaktuToMinutes(b['WAKTU']);
                     let startA = minA ? minA.start : Number.MAX_SAFE_INTEGER;
@@ -681,19 +678,12 @@
                 return true;
             });
 
-            let mapelGroup = {};
-            dataPengajarIni.forEach(row => {
-                let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Agenda Lainnya';
-                if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
-                mapelGroup[mapel].push(row);
-            });
-
-            if(Object.keys(mapelGroup).length === 0) {
+            if(dataPengajarIni.length === 0) {
                 areaRekapan.html('<div class="col-12 text-center text-muted py-4"><i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p>Tidak ada jadwal pengajar pada filter tersebut.</p></div>');
                 return;
             }
 
-            let htmlOutput = `
+            let statsHtml = `
                 <div class="col-12 mb-4">
                     <div class="row g-3">
                         <div class="col-md-4"><div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100"><div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-layer-group text-warning me-1"></i>Total Mengajar Terekap</div><h3 class="fw-bolder text-warning mb-0" style="color: #d97706 !important;">${totalSesiKeseluruhan}</h3></div></div>
@@ -702,47 +692,124 @@
                     </div>
                 </div>
             `;
-            let mapelIndex = 0;
             
-            Object.keys(mapelGroup).sort().forEach(mapel => {
-                let riwayat = mapelGroup[mapel];
+            let htmlOutput = statsHtml; 
+
+            if(modeRekapanPengajar === 'mapel') {
+                let mapelGroup = {};
+                dataPengajarIni.forEach(row => {
+                    let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Agenda Lainnya';
+                    if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
+                    mapelGroup[mapel].push(row);
+                });
+
+                let mapelIndex = 0;
+                Object.keys(mapelGroup).sort().forEach(mapel => {
+                    let riwayat = mapelGroup[mapel];
+                    let tbodyHtml = "";
+                    
+                    riwayat.forEach(sesi => {
+                        let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                        let statusBadge = ""; let rowClass = "";
+                        if (dateObj) {
+                            dateObj.setHours(0,0,0,0);
+                            if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                            else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
+                            else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
+                        }
+
+                        tbodyHtml += `<tr class="${rowClass}">
+                            <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
+                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                            <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
+                        </tr>`;
+                    });
+
+                    htmlOutput += `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="mapel-card">
+                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapsePengajar${mapelIndex}">
+                                    <div class="d-flex align-items-center w-100">
+                                        <i class="fas fa-book-reader text-warning me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
+                                        <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
+                                    </div>
+                                </div>
+                                <div id="collapsePengajar${mapelIndex}" class="collapse">
+                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    mapelIndex++;
+                });
+            } else {
+                // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
+                dataPengajarIni.sort((a, b) => {
+                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                    let timeA = dateA ? dateA.getTime() : Number.MAX_SAFE_INTEGER; 
+                    let timeB = dateB ? dateB.getTime() : Number.MAX_SAFE_INTEGER;
+                    if (timeA !== timeB) return timeA - timeB; 
+                    let minA = parseWaktuToMinutes(a['WAKTU']);
+                    let minB = parseWaktuToMinutes(b['WAKTU']);
+                    let startA = minA ? minA.start : Number.MAX_SAFE_INTEGER;
+                    let startB = minB ? minB.start : Number.MAX_SAFE_INTEGER;
+                    return startA - startB;
+                });
+
                 let tbodyHtml = "";
-                
-                riwayat.forEach(sesi => {
+                let noUrut = 1;
+
+                dataPengajarIni.forEach(sesi => {
                     let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
                     let statusBadge = ""; let rowClass = "";
                     if (dateObj) {
                         dateObj.setHours(0,0,0,0);
-                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
-                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
-                        else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
+                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 ms-2" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success ms-2" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
+                        else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
                     tbodyHtml += `<tr class="${rowClass}">
-                        <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
-                        <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                        <td class="text-center text-muted fw-bold">${noUrut++}</td>
+                        <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
+                        <td><span class="badge bg-light text-warning border border-warning-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                        <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
+                        <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
                         <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
                     </tr>`;
                 });
 
                 htmlOutput += `
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="mapel-card">
-                            <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapsePengajar${mapelIndex}">
-                                <div class="d-flex align-items-center w-100">
-                                    <i class="fas fa-book-reader text-warning me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
-                                    <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
-                                </div>
+                    <div class="col-12">
+                        <div class="group-card p-4 border-warning border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                                <h5 class="fw-bold text-dark mb-0"><i class="far fa-calendar-alt text-warning me-2"></i>Riwayat Pengajar Berdasarkan Waktu</h5>
+                                <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${dataPengajarIni.length} Total Sesi</span>
                             </div>
-                            <div id="collapsePengajar${mapelIndex}" class="collapse">
-                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
+                                    <thead class="text-center">
+                                        <tr>
+                                            <th width="5%">No</th>
+                                            <th width="20%">Tanggal</th>
+                                            <th width="15%">Jam</th>
+                                            <th width="20%">Mapel</th>
+                                            <th width="25%">Materi</th>
+                                            <th width="15%">Kelas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tbodyHtml}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 `;
-                mapelIndex++;
-            });
+            }
+
             areaRekapan.html(htmlOutput);
         }
         $('#pilihPengajar, #pilihBagianPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
