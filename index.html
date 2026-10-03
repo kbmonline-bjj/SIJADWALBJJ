@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Informasi Pantauan Jadwal Neutron</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://framerusercontent.com/images/0UNTpj30PiLEVnn1bNpsHmaqOrE.png">
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -85,6 +88,7 @@
     <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
         <div class="container-fluid px-4 py-1">
             <a class="navbar-brand d-flex align-items-center" href="#">
+                <!-- Anda juga bisa mengganti icon fontawesome di bawah ini dengan tag img jika ingin logo Neutron di navbar -->
                 <i class="fas fa-layer-group text-primary me-2 fs-3"></i> Pantauan Operasional
             </a>
         </div>
@@ -112,7 +116,7 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- TAB 1: PANTAUAN HARIAN -->
+            <!-- TAB 1: PANTAUAN HARIAN (Tanpa Kunci) -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
@@ -137,6 +141,8 @@
 
             <!-- TAB 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
+                
+                <!-- LAYAR KUNCI REKAPAN KELAS -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -151,10 +157,13 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
+
+                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-rekapan mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
                             <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
+                            <!-- Tombol Toggle Mode Rekapan Kelas -->
                             <div class="mode-toggle mt-2">
                                 <button class="btn-mode btn-mode-kelas active" id="btnRekapanMapel" onclick="ubahModeRekapanKelas('mapel')"><i class="fas fa-book me-2"></i>Berdasarkan Mapel</button>
                                 <button class="btn-mode btn-mode-kelas" id="btnRekapanWaktu" onclick="ubahModeRekapanKelas('waktu')"><i class="far fa-calendar-alt me-2"></i>Berdasarkan Waktu</button>
@@ -189,6 +198,8 @@
 
             <!-- TAB 3: REKAPAN PENGAJAR -->
             <div class="tab-pane fade" id="pengajar" role="tabpanel">
+                
+                <!-- LAYAR KUNCI REKAPAN PENGAJAR -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -203,6 +214,8 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
+
+                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-pengajar mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
@@ -430,6 +443,7 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
+                    // Setup Bagian / Cabang Global Dropdowns
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
@@ -439,6 +453,7 @@
                     $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
+                    // Default "Bag. Online" Trigger
                     $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                     $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                     $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
@@ -743,6 +758,7 @@
                     `;
                     mapelIndex++;
                 });
+
             } else {
                 // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
                 dataPengajarIni.sort((a, b) => {
