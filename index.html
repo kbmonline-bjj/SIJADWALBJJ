@@ -51,6 +51,7 @@
         .btn-mode { border: none; background: transparent; color: white; border-radius: 8px; padding: 0.5rem 1rem; font-weight: 600; transition: 0.2s; }
         .btn-mode.active { background: white; color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .btn-mode-pengajar.active { color: #d97706 !important; }
+        .btn-mode-kelas.active { color: #059669 !important; }
 
         .cursor-pointer { cursor: pointer; }
         .mapel-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; }
@@ -157,7 +158,11 @@
                     <div class="header-section header-rekapan mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
                             <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
-                            <p class="mb-0 text-white-50" style="font-size: 1.1rem;">Filter Cabang, Kelas, dan rentang tanggal untuk melihat riwayat.</p>
+                            <!-- Tombol Toggle Mode Rekapan Kelas -->
+                            <div class="mode-toggle mt-2">
+                                <button class="btn-mode btn-mode-kelas active" id="btnRekapanMapel" onclick="ubahModeRekapanKelas('mapel')"><i class="fas fa-book me-2"></i>Berdasarkan Mapel</button>
+                                <button class="btn-mode btn-mode-kelas" id="btnRekapanWaktu" onclick="ubahModeRekapanKelas('waktu')"><i class="far fa-calendar-alt me-2"></i>Berdasarkan Waktu</button>
+                            </div>
                         </div>
                         <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
                             <select id="pilihBagianKelas" class="form-select w-100 text-primary">
@@ -281,6 +286,7 @@
         let globalData = [];
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
+        let modeRekapanKelas = 'mapel'; // Status mode Tab Rekapan Kelas
 
         // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
@@ -343,6 +349,14 @@
             if(mode === 'studio') $('#btnModeStudio').addClass('active');
             else $('#btnModeJam').addClass('active');
             renderPantauanHarian(); 
+        }
+        
+        function ubahModeRekapanKelas(mode) {
+            modeRekapanKelas = mode;
+            $('#btnRekapanMapel, #btnRekapanWaktu').removeClass('active');
+            if(mode === 'mapel') $('#btnRekapanMapel').addClass('active');
+            else $('#btnRekapanWaktu').addClass('active');
+            renderRekapanKelas();
         }
 
         function ubahModePengajar(mode) {
@@ -436,7 +450,6 @@
             });
         });
 
-        // Trigger Event Update Dropdown Saat Bagian Diubah
         $('#pilihBagianKelas').on('change', function() {
             updateKelasDropdown($(this).val());
             renderRekapanKelas();
@@ -486,19 +499,12 @@
                 return true;
             });
 
-            let mapelGroup = {};
-            dataKelasIni.forEach(row => {
-                let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Tanpa Mapel';
-                if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
-                mapelGroup[mapel].push(row);
-            });
-
-            if(Object.keys(mapelGroup).length === 0) {
+            if(dataKelasIni.length === 0) {
                 areaRekapan.html('<div class="col-12 text-center text-muted py-4"><i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p>Tidak ada jadwal kelas pada filter tersebut.</p></div>');
                 return;
             }
 
-            let htmlOutput = `
+            let statsHtml = `
                 <div class="col-12 mb-4">
                     <div class="row g-3">
                         <div class="col-md-4"><div class="bg-white p-3 rounded-4 shadow-sm border border-light text-center h-100"><div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fas fa-layer-group text-primary me-1"></i>Total Sesi Terekap</div><h3 class="fw-bolder text-primary mb-0">${totalSesiKeseluruhan}</h3></div></div>
@@ -507,50 +513,129 @@
                     </div>
                 </div>
             `;
-            let mapelIndex = 0;
             
-            Object.keys(mapelGroup).sort().forEach(mapel => {
-                let riwayat = mapelGroup[mapel];
-                let tbodyHtml = "";
-                
-                riwayat.forEach(sesi => {
-                    let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
-                    let statusBadge = ""; let rowClass = "";
-                    if (dateObj) {
-                        dateObj.setHours(0,0,0,0);
-                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
-                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
-                        else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
-                    }
+            let htmlOutput = statsHtml; 
+            let cardIndex = 0;
 
-                    tbodyHtml += `<tr class="${rowClass}">
-                        <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
-                        <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                        <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
-                        <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
-                    </tr>`;
+            if(modeRekapanKelas === 'mapel') {
+                // Pengelompokan Berdasarkan MAPEL
+                let mapelGroup = {};
+                dataKelasIni.forEach(row => {
+                    let mapel = row['MAPEL'] ? row['MAPEL'].trim() : 'Tanpa Mapel';
+                    if(!mapelGroup[mapel]) mapelGroup[mapel] = [];
+                    mapelGroup[mapel].push(row);
                 });
 
-                htmlOutput += `
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="mapel-card">
-                            <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseKelas${mapelIndex}">
-                                <div class="d-flex align-items-center w-100">
-                                    <i class="fas fa-book text-success me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
-                                    <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
+                Object.keys(mapelGroup).sort().forEach(mapel => {
+                    let riwayat = mapelGroup[mapel];
+                    let tbodyHtml = "";
+                    
+                    riwayat.forEach(sesi => {
+                        let dateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                        let statusBadge = ""; let rowClass = "";
+                        if (dateObj) {
+                            dateObj.setHours(0,0,0,0);
+                            if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 mt-1" style="font-size:0.6rem;">Selesai</span>'; rowClass = "text-muted opacity-75"; }
+                            else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success mt-1" style="font-size:0.6rem;">Hari Ini</span>'; rowClass = "table-success text-dark"; }
+                            else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
+                        }
+
+                        tbodyHtml += `<tr class="${rowClass}">
+                            <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
+                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                            <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
+                        </tr>`;
+                    });
+
+                    htmlOutput += `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="mapel-card">
+                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseKelas${cardIndex}">
+                                    <div class="d-flex align-items-center w-100">
+                                        <i class="fas fa-book text-success me-2"></i> <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${mapel}</span>
+                                        <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
+                                    </div>
+                                </div>
+                                <div id="collapseKelas${cardIndex}" class="collapse">
+                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                                 </div>
                             </div>
-                            <div id="collapseKelas${mapelIndex}" class="collapse">
-                                <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                        </div>
+                    `;
+                    cardIndex++;
+                });
+
+            } else {
+                // Pengelompokan Berdasarkan TANGGAL DAN JAM
+                let waktuGroup = {};
+                dataKelasIni.forEach(row => {
+                    let tgl = row['Hari Tanggal'] ? row['Hari Tanggal'].trim() : 'Tanpa Tanggal';
+                    if(!waktuGroup[tgl]) waktuGroup[tgl] = [];
+                    waktuGroup[tgl].push(row);
+                });
+
+                let sortedDates = Object.keys(waktuGroup).sort((a, b) => {
+                    if (a === 'Tanpa Tanggal') return 1;
+                    if (b === 'Tanpa Tanggal') return -1;
+                    let dateA = parseDateFromCSV(a);
+                    let dateB = parseDateFromCSV(b);
+                    return dateA && dateB ? dateA.getTime() - dateB.getTime() : 0;
+                });
+
+                sortedDates.forEach(tgl => {
+                    let riwayat = waktuGroup[tgl];
+                    let tbodyHtml = "";
+
+                    riwayat.sort((a,b) => {
+                        let wa = parseWaktuToMinutes(a['WAKTU']);
+                        let wb = parseWaktuToMinutes(b['WAKTU']);
+                        if(wa && wb) return wa.start - wb.start;
+                        return 0;
+                    });
+                    
+                    let dateObj = parseDateFromCSV(tgl);
+                    let statusBadge = ""; let cardBorder = "";
+                    if (dateObj) {
+                        dateObj.setHours(0,0,0,0);
+                        if (dateObj < todayObj) { statusBadge = '<span class="badge bg-secondary opacity-75 ms-2" style="font-size:0.6rem;">Selesai</span>'; }
+                        else if (dateObj.getTime() === todayObj.getTime()) { statusBadge = '<span class="badge bg-success ms-2" style="font-size:0.6rem;">Hari Ini</span>'; cardBorder = "border-success border-2"; }
+                        else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
+                    }
+
+                    riwayat.forEach(sesi => {
+                        tbodyHtml += `<tr>
+                            <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
+                            <td><div class="fw-bold text-dark" style="font-size:0.8rem;">${sesi['MAPEL'] || '-'}</div></td>
+                            <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                            <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
+                        </tr>`;
+                    });
+
+                    htmlOutput += `
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="mapel-card ${cardBorder}">
+                                <div class="mapel-header cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapseWaktu${cardIndex}">
+                                    <div class="d-flex align-items-center w-100">
+                                        <i class="far fa-calendar-alt text-primary me-2"></i> 
+                                        <span class="text-truncate fw-bold" style="max-width: 60%; font-size: 0.9rem;">${tgl}</span>
+                                        ${statusBadge}
+                                        <div class="ms-auto d-flex align-items-center"><span class="badge bg-secondary rounded-pill me-2" style="font-size: 0.65rem;">${riwayat.length} Sesi</span><i class="fas fa-chevron-down text-muted collapse-icon" style="font-size: 0.8rem;"></i></div>
+                                    </div>
+                                </div>
+                                <div id="collapseWaktu${cardIndex}" class="collapse">
+                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 20%;">Jam</th><th style="width: 25%;">Mapel</th><th style="width: 30%;">Materi</th><th style="width: 25%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                mapelIndex++;
-            });
+                    `;
+                    cardIndex++;
+                });
+            }
+
             areaRekapan.html(htmlOutput);
         }
-        $('#pilihKelas, #startDateKelas, #endDateKelas').on('change', renderRekapanKelas);
+        $('#pilihKelas, #pilihBagianKelas, #startDateKelas, #endDateKelas').on('change', renderRekapanKelas);
 
         // ==========================================
         // RENDER REKAPAN PENGAJAR (INDIVIDU)
@@ -658,7 +743,7 @@
             });
             areaRekapan.html(htmlOutput);
         }
-        $('#pilihPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
+        $('#pilihPengajar, #pilihBagianPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
         // RENDER REKAPAN PENGAJAR (DETAIL PERIODE)
