@@ -272,6 +272,38 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP RIWAYAT MATERI SEBELUMNYA -->
+    <div class="modal fade" id="modalRiwayatMateri" tabindex="-1" aria-labelledby="modalRiwayatMateriLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0 pb-2">
+                    <h5 class="modal-title fw-bold text-primary" id="modalRiwayatMateriLabel"><i class="fas fa-history me-2"></i>Riwayat Materi Sebelumnya</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th width="20%">Tanggal</th>
+                                    <th width="15%">Jam</th>
+                                    <th width="40%">Materi yang Dibahas</th>
+                                    <th width="25%">Pengajar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyRiwayatMateri">
+                                <!-- Data diinject via Javascript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0 pt-2">
+                    <button type="button" class="btn btn-secondary rounded-3 px-4 fw-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -286,7 +318,6 @@
         let modeRekapanKelas = 'mapel'; 
         let modeRekapanPengajar = 'mapel'; 
 
-        // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
 
         function bukaAkses(btn) {
@@ -742,7 +773,6 @@
                     mapelIndex++;
                 });
             } else {
-                // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
                 dataPengajarIni.sort((a, b) => {
                     let dateA = parseDateFromCSV(a['Hari Tanggal']);
                     let dateB = parseDateFromCSV(b['Hari Tanggal']);
@@ -940,6 +970,66 @@
         $('#pilihCabangPeriode, #startDatePeriode, #endDatePeriode').on('change', renderRekapanPeriode);
 
         // ==========================================
+        // FUNGSI BANTUAN MATERI SEBELUMNYA
+        // ==========================================
+        function buildPrevMateriHtml(sesi) {
+            let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
+            let currentMapel = sesi['MAPEL'] ? sesi['MAPEL'].trim() : '';
+            let currentWaktu = parseWaktuToMinutes(sesi['WAKTU']);
+            let currentDateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+            
+            if (!currentKelas || currentKelas === '-' || !currentMapel || currentMapel === '-') return "";
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== currentKelas) return false;
+                if ((r['MAPEL'] || '').trim() !== currentMapel) return false;
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (currentDateObj && rDate.getTime() < currentDateObj.getTime()) return true;
+                if (currentDateObj && rDate.getTime() === currentDateObj.getTime()) {
+                    if (currentWaktu && rWaktu && rWaktu.start < currentWaktu.start) return true;
+                }
+                return false;
+            });
+
+            if (history.length === 0) return "";
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let latestPrev = history[0];
+            let lPrevMateri = latestPrev['MATERI YANG DIBAHAS'] ? latestPrev['MATERI YANG DIBAHAS'].trim() : '';
+            let lPrevTanggal = latestPrev['Hari Tanggal'] || '-';
+            
+            if (!lPrevMateri || lPrevMateri === '-') return "";
+
+            let encodedKelas = encodeURIComponent(currentKelas);
+            let encodedMapel = encodeURIComponent(currentMapel);
+            let encodedTgl = encodeURIComponent(sesi['Hari Tanggal'] || '');
+            let encodedWaktu = encodeURIComponent(sesi['WAKTU'] || '');
+
+            return `<div class="mt-2 d-flex justify-content-between align-items-start">
+                        <div>
+                            <i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br>
+                            <em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary ms-2 flex-shrink-0 fw-bold" style="font-size:0.65rem; padding: 0.15rem 0.4rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
+                    </div>`;
+        }
+
+        // ==========================================
         // PANTAUAN HARIAN
         // ==========================================
         function renderPantauanHarian() {
@@ -996,54 +1086,8 @@
                         
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        let prevMateriHtml = buildPrevMateriHtml(sesi);
                         
-                        // --- LOGIC MATERI SEBELUMNYA ---
-                        let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
-                        let currentMapel = sesi['MAPEL'] ? sesi['MAPEL'].trim() : '';
-                        let currentWaktu = parseWaktuToMinutes(sesi['WAKTU']);
-                        let currentDateObj = parseDateFromCSV(sesi['Hari Tanggal']);
-                        let prevMateriHtml = "";
-
-                        if (currentKelas && currentKelas !== '-' && currentMapel && currentMapel !== '-') {
-                            let history = globalData.filter(r => {
-                                if ((r['KELAS'] || '').trim() !== currentKelas) return false;
-                                if ((r['MAPEL'] || '').trim() !== currentMapel) return false;
-                                let rDate = parseDateFromCSV(r['Hari Tanggal']);
-                                if (!rDate) return false;
-                                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
-                                
-                                if (currentDateObj && rDate.getTime() < currentDateObj.getTime()) return true;
-                                if (currentDateObj && rDate.getTime() === currentDateObj.getTime()) {
-                                    if (currentWaktu && rWaktu && rWaktu.start < currentWaktu.start) return true;
-                                }
-                                return false;
-                            });
-
-                            if (history.length > 0) {
-                                history.sort((a, b) => {
-                                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
-                                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
-                                    let timeA = dateA ? dateA.getTime() : 0;
-                                    let timeB = dateB ? dateB.getTime() : 0;
-                                    if (timeA !== timeB) return timeB - timeA; 
-                                    let wA = parseWaktuToMinutes(a['WAKTU']);
-                                    let wB = parseWaktuToMinutes(b['WAKTU']);
-                                    let startA = wA ? wA.start : 0;
-                                    let startB = wB ? wB.start : 0;
-                                    return startB - startA;
-                                });
-
-                                let latestPrev = history[0];
-                                let lPrevMateri = latestPrev['MATERI YANG DIBAHAS'] ? latestPrev['MATERI YANG DIBAHAS'].trim() : '';
-                                let lPrevTanggal = latestPrev['Hari Tanggal'] || '-';
-                                
-                                if (lPrevMateri && lPrevMateri !== '-') {
-                                    prevMateriHtml = `<div class="mt-1"><i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br><em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em></div>`;
-                                }
-                            }
-                        }
-                        // --- END LOGIC ---
-
                         let tambahanHtml = "";
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
@@ -1100,54 +1144,8 @@
                         
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        let prevMateriHtml = buildPrevMateriHtml(sesi);
                         
-                        // --- LOGIC MATERI SEBELUMNYA ---
-                        let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
-                        let currentMapel = sesi['MAPEL'] ? sesi['MAPEL'].trim() : '';
-                        let currentWaktu = parseWaktuToMinutes(sesi['WAKTU']);
-                        let currentDateObj = parseDateFromCSV(sesi['Hari Tanggal']);
-                        let prevMateriHtml = "";
-
-                        if (currentKelas && currentKelas !== '-' && currentMapel && currentMapel !== '-') {
-                            let history = globalData.filter(r => {
-                                if ((r['KELAS'] || '').trim() !== currentKelas) return false;
-                                if ((r['MAPEL'] || '').trim() !== currentMapel) return false;
-                                let rDate = parseDateFromCSV(r['Hari Tanggal']);
-                                if (!rDate) return false;
-                                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
-                                
-                                if (currentDateObj && rDate.getTime() < currentDateObj.getTime()) return true;
-                                if (currentDateObj && rDate.getTime() === currentDateObj.getTime()) {
-                                    if (currentWaktu && rWaktu && rWaktu.start < currentWaktu.start) return true;
-                                }
-                                return false;
-                            });
-
-                            if (history.length > 0) {
-                                history.sort((a, b) => {
-                                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
-                                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
-                                    let timeA = dateA ? dateA.getTime() : 0;
-                                    let timeB = dateB ? dateB.getTime() : 0;
-                                    if (timeA !== timeB) return timeB - timeA; 
-                                    let wA = parseWaktuToMinutes(a['WAKTU']);
-                                    let wB = parseWaktuToMinutes(b['WAKTU']);
-                                    let startA = wA ? wA.start : 0;
-                                    let startB = wB ? wB.start : 0;
-                                    return startB - startA;
-                                });
-
-                                let latestPrev = history[0];
-                                let lPrevMateri = latestPrev['MATERI YANG DIBAHAS'] ? latestPrev['MATERI YANG DIBAHAS'].trim() : '';
-                                let lPrevTanggal = latestPrev['Hari Tanggal'] || '-';
-                                
-                                if (lPrevMateri && lPrevMateri !== '-') {
-                                    prevMateriHtml = `<div class="mt-1"><i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br><em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em></div>`;
-                                }
-                            }
-                        }
-                        // --- END LOGIC ---
-
                         let tambahanHtml = "";
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
@@ -1177,6 +1175,73 @@
             if (adaBentrokGlobal) $('#peringatanBentrokUtama').removeClass('d-none');
         }
         $('#pilihTanggal, #pilihBagianHarian').on('change', renderPantauanHarian);
+
+        // ==========================================
+        // FUNGSI BUKA MODAL RIWAYAT MATERI
+        // ==========================================
+        function bukaRiwayatMateri(encKelas, encMapel, encTgl, encWaktu) {
+            let kelas = decodeURIComponent(encKelas);
+            let mapel = decodeURIComponent(encMapel);
+            let tgl = decodeURIComponent(encTgl);
+            let waktu = decodeURIComponent(encWaktu);
+
+            let targetDateObj = parseDateFromCSV(tgl);
+            let targetWaktu = parseWaktuToMinutes(waktu);
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== kelas) return false;
+                if ((r['MAPEL'] || '').trim() !== mapel) return false;
+                
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
+                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
+                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
+                }
+                return false;
+            });
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let tbody = "";
+            if (history.length === 0) {
+                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
+            } else {
+                history.forEach((h) => {
+                    let hTanggal = h['Hari Tanggal'] || '-';
+                    let hWaktu = h['WAKTU'] || '-';
+                    let hMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '<em class="text-muted">Belum diisi</em>';
+                    let hPengajar = h['PENGAJAR'] || '-';
+
+                    tbody += `
+                    <tr>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
+                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
+                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
+            $('#bodyRiwayatMateri').html(tbody);
+            
+            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
+            modal.show();
+        }
 
     </script>
 </body>
