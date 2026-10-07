@@ -88,7 +88,6 @@
     <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
         <div class="container-fluid px-4 py-1">
             <a class="navbar-brand d-flex align-items-center" href="#">
-                <!-- Anda juga bisa mengganti icon fontawesome di bawah ini dengan tag img jika ingin logo Neutron di navbar -->
                 <i class="fas fa-layer-group text-primary me-2 fs-3"></i> Pantauan Operasional
             </a>
         </div>
@@ -116,7 +115,7 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- TAB 1: PANTAUAN HARIAN (Tanpa Kunci) -->
+            <!-- TAB 1: PANTAUAN HARIAN -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
@@ -141,8 +140,6 @@
 
             <!-- TAB 2: REKAPAN KELAS -->
             <div class="tab-pane fade" id="rekapan" role="tabpanel">
-                
-                <!-- LAYAR KUNCI REKAPAN KELAS -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -157,13 +154,10 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
-
-                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-rekapan mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
                             <h2 class="fw-bold mb-2"><i class="fas fa-graduation-cap me-2"></i>Rekapan Kelas</h2>
-                            <!-- Tombol Toggle Mode Rekapan Kelas -->
                             <div class="mode-toggle mt-2">
                                 <button class="btn-mode btn-mode-kelas active" id="btnRekapanMapel" onclick="ubahModeRekapanKelas('mapel')"><i class="fas fa-book me-2"></i>Berdasarkan Mapel</button>
                                 <button class="btn-mode btn-mode-kelas" id="btnRekapanWaktu" onclick="ubahModeRekapanKelas('waktu')"><i class="far fa-calendar-alt me-2"></i>Berdasarkan Waktu</button>
@@ -198,8 +192,6 @@
 
             <!-- TAB 3: REKAPAN PENGAJAR -->
             <div class="tab-pane fade" id="pengajar" role="tabpanel">
-                
-                <!-- LAYAR KUNCI REKAPAN PENGAJAR -->
                 <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
                     <div class="mb-4 mt-3">
                         <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
@@ -214,8 +206,6 @@
                     </div>
                     <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
-
-                <!-- KONTEN ASLI -->
                 <div class="secured-content d-none">
                     <div class="header-section header-pengajar mt-0">
                         <div class="flex-grow-1 mb-3 mb-md-0">
@@ -226,14 +216,11 @@
                             </div>
                         </div>
                         
-                        <!-- Filter Mode 1: Individu -->
                         <div id="filterPengajarIndividu" class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                            <!-- SUB-TOGGLE: Mapel vs Waktu -->
                             <div class="mode-toggle align-self-start mb-1" style="background: rgba(255,255,255,0.15);">
                                 <button class="btn-mode btn-mode-pengajar-sub active" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" id="btnPengajarMapel" onclick="ubahModePengajarSub('mapel')"><i class="fas fa-book me-1"></i>Mapel</button>
                                 <button class="btn-mode btn-mode-pengajar-sub" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;" id="btnPengajarWaktu" onclick="ubahModePengajarSub('waktu')"><i class="far fa-calendar-alt me-1"></i>Waktu</button>
                             </div>
-                            
                             <select id="pilihBagianPengajar" class="form-select w-100 text-warning">
                                 <option value="">Semua Cabang / Bagian</option>
                             </select>
@@ -253,7 +240,6 @@
                             <small class="text-white-50 text-end" style="font-size: 0.75rem;">*Kosongkan tanggal untuk melihat semua waktu</small>
                         </div>
 
-                        <!-- Filter Mode 2: Periode -->
                         <div id="filterPengajarPeriode" class="d-none flex-column gap-2" style="min-width: 280px; width: 380px;">
                             <select id="pilihCabangPeriode" class="form-select w-100 text-warning">
                                 <option value="">-- Semua Cabang/Bagian --</option>
@@ -298,7 +284,7 @@
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
         let modeRekapanKelas = 'mapel'; 
-        let modeRekapanPengajar = 'mapel'; // Status mode Tab Pengajar Individu
+        let modeRekapanPengajar = 'mapel'; 
 
         // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
@@ -427,7 +413,6 @@
             $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
         }
 
-
         $(document).ready(function() {
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
@@ -443,7 +428,6 @@
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    // Setup Bagian / Cabang Global Dropdowns
                     let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                     cabangUnik = cabangUnik.filter(c => c !== '').sort();
                     let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
@@ -453,7 +437,6 @@
                     $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                     $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    // Default "Bag. Online" Trigger
                     $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                     $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                     $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
@@ -758,7 +741,6 @@
                     `;
                     mapelIndex++;
                 });
-
             } else {
                 // Pengelompokan Berdasarkan WAKTU (1 Tabel Penuh)
                 dataPengajarIni.sort((a, b) => {
@@ -1015,11 +997,59 @@
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         
+                        // --- LOGIC MATERI SEBELUMNYA ---
+                        let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
+                        let currentMapel = sesi['MAPEL'] ? sesi['MAPEL'].trim() : '';
+                        let currentWaktu = parseWaktuToMinutes(sesi['WAKTU']);
+                        let currentDateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                        let prevMateriHtml = "";
+
+                        if (currentKelas && currentKelas !== '-' && currentMapel && currentMapel !== '-') {
+                            let history = globalData.filter(r => {
+                                if ((r['KELAS'] || '').trim() !== currentKelas) return false;
+                                if ((r['MAPEL'] || '').trim() !== currentMapel) return false;
+                                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                                if (!rDate) return false;
+                                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                                
+                                if (currentDateObj && rDate.getTime() < currentDateObj.getTime()) return true;
+                                if (currentDateObj && rDate.getTime() === currentDateObj.getTime()) {
+                                    if (currentWaktu && rWaktu && rWaktu.start < currentWaktu.start) return true;
+                                }
+                                return false;
+                            });
+
+                            if (history.length > 0) {
+                                history.sort((a, b) => {
+                                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                                    let timeA = dateA ? dateA.getTime() : 0;
+                                    let timeB = dateB ? dateB.getTime() : 0;
+                                    if (timeA !== timeB) return timeB - timeA; 
+                                    let wA = parseWaktuToMinutes(a['WAKTU']);
+                                    let wB = parseWaktuToMinutes(b['WAKTU']);
+                                    let startA = wA ? wA.start : 0;
+                                    let startB = wB ? wB.start : 0;
+                                    return startB - startA;
+                                });
+
+                                let latestPrev = history[0];
+                                let lPrevMateri = latestPrev['MATERI YANG DIBAHAS'] ? latestPrev['MATERI YANG DIBAHAS'].trim() : '';
+                                let lPrevTanggal = latestPrev['Hari Tanggal'] || '-';
+                                
+                                if (lPrevMateri && lPrevMateri !== '-') {
+                                    prevMateriHtml = `<div class="mt-1"><i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br><em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em></div>`;
+                                }
+                            }
+                        }
+                        // --- END LOGIC ---
+
                         let tambahanHtml = "";
-                        if((materi && materi !== '-') || (folder && folder !== '-')) {
+                        if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
@@ -1071,11 +1101,59 @@
                         let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
                         let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         
+                        // --- LOGIC MATERI SEBELUMNYA ---
+                        let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
+                        let currentMapel = sesi['MAPEL'] ? sesi['MAPEL'].trim() : '';
+                        let currentWaktu = parseWaktuToMinutes(sesi['WAKTU']);
+                        let currentDateObj = parseDateFromCSV(sesi['Hari Tanggal']);
+                        let prevMateriHtml = "";
+
+                        if (currentKelas && currentKelas !== '-' && currentMapel && currentMapel !== '-') {
+                            let history = globalData.filter(r => {
+                                if ((r['KELAS'] || '').trim() !== currentKelas) return false;
+                                if ((r['MAPEL'] || '').trim() !== currentMapel) return false;
+                                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                                if (!rDate) return false;
+                                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                                
+                                if (currentDateObj && rDate.getTime() < currentDateObj.getTime()) return true;
+                                if (currentDateObj && rDate.getTime() === currentDateObj.getTime()) {
+                                    if (currentWaktu && rWaktu && rWaktu.start < currentWaktu.start) return true;
+                                }
+                                return false;
+                            });
+
+                            if (history.length > 0) {
+                                history.sort((a, b) => {
+                                    let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                                    let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                                    let timeA = dateA ? dateA.getTime() : 0;
+                                    let timeB = dateB ? dateB.getTime() : 0;
+                                    if (timeA !== timeB) return timeB - timeA; 
+                                    let wA = parseWaktuToMinutes(a['WAKTU']);
+                                    let wB = parseWaktuToMinutes(b['WAKTU']);
+                                    let startA = wA ? wA.start : 0;
+                                    let startB = wB ? wB.start : 0;
+                                    return startB - startA;
+                                });
+
+                                let latestPrev = history[0];
+                                let lPrevMateri = latestPrev['MATERI YANG DIBAHAS'] ? latestPrev['MATERI YANG DIBAHAS'].trim() : '';
+                                let lPrevTanggal = latestPrev['Hari Tanggal'] || '-';
+                                
+                                if (lPrevMateri && lPrevMateri !== '-') {
+                                    prevMateriHtml = `<div class="mt-1"><i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br><em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em></div>`;
+                                }
+                            }
+                        }
+                        // --- END LOGIC ---
+
                         let tambahanHtml = "";
-                        if((materi && materi !== '-') || (folder && folder !== '-')) {
+                        if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
