@@ -40,7 +40,7 @@
         .group-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); height: 100%; display: flex; flex-direction: column; }
         .group-header { background: #f8fafc; padding: 1rem; text-align: center; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 1.1rem; }
         .sesi-container { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.8rem; }
-        .jadwal-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; transition: 0.3s; border-left: 4px solid #4f46e5;}
+        .jadwal-item { position: relative; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; transition: 0.3s; border-left: 4px solid #4f46e5;}
         .bentrok-alert { border-color: #fecaca !important; background: #fff5f5; border-left: 4px solid #ef4444 !important;}
         
         @keyframes pulse-live { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
@@ -83,6 +83,10 @@
         .table-periode thead th { background-color: #f1f5f9; color: #334155; }
 
         .btn-link-folder:hover { opacity: 0.85; transform: scale(0.98); }
+        
+        /* CLASS UNTUK MODE EDIT (CRUD) */
+        .btn-edit-sesi { display: none; z-index: 10; padding: 0.15rem 0.5rem; font-size: 0.75rem; border-radius: 6px; }
+        .admin-mode-active .btn-edit-sesi { display: inline-flex !important; }
     </style>
 </head>
 <body>
@@ -92,8 +96,10 @@
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <i class="fas fa-layer-group text-primary me-2 fs-3"></i> Pantauan Operasional
             </a>
-            <!-- Tombol Edit Data -->
-            <button class="btn btn-sm btn-light border fw-bold text-primary shadow-sm ms-auto" onclick="bukaModalEdit()"><i class="fas fa-edit me-1"></i>Edit Data</button>
+            <!-- Tombol Toggle Mode Edit Admin -->
+            <button id="btnAdminMode" class="btn btn-sm btn-light border fw-bold text-primary shadow-sm ms-auto" onclick="toggleAdminMode()">
+                <i class="fas fa-edit me-1"></i>Mode Edit Web
+            </button>
         </div>
     </nav>
 
@@ -276,8 +282,68 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP VERIFIKASI ADMIN UNTUK EDIT DATA -->
+    <div class="modal fade" id="modalVerifyAdmin" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 70px; height: 70px;">
+                            <i class="fas fa-shield-alt fs-1 text-primary"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Aktivasi Mode Edit</h5>
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk bisa mengedit data secara langsung (CRUD).</p>
+                    <input type="password" id="inputVerifyAdmin" class="form-control form-control-modern text-center mb-2" placeholder="Kode Admin">
+                    <div id="errorVerifyAdmin" class="text-danger fw-bold d-none mb-3" style="font-size: 0.8rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode salah!</div>
+                    <button class="btn btn-primary w-100 fw-bold rounded-3 mt-2" onclick="prosesVerifyAdmin()">Aktifkan Edit Web</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP FORM EDIT SESI (CRUD) -->
+    <div class="modal fade" id="modalFormEdit" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header bg-primary text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Edit Materi & Tautan</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light p-4">
+                    <div class="alert alert-info py-2 px-3 mb-4" style="font-size: 0.85rem;">
+                        <strong>Info Jadwal:</strong> <br>
+                        <span id="infoEditSesi"></span>
+                    </div>
+                    
+                    <!-- ID Tersembunyi untuk proses API -->
+                    <input type="hidden" id="editTanggalHidden">
+                    <input type="hidden" id="editWaktuHidden">
+                    <input type="hidden" id="editKelasHidden">
+                    <input type="hidden" id="editMapelHidden">
+
+                    <div class="mb-3">
+                        <label class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Materi yang Dibahas:</label>
+                        <textarea id="inputEditMateri" class="form-control form-control-modern" rows="2" placeholder="Ketik materi di sini..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Folder iPad / Link Pembahasan:</label>
+                        <textarea id="inputEditFolder" class="form-control form-control-modern" rows="2" placeholder="Tempelkan link Google Drive/PDF di sini..."></textarea>
+                        <small class="text-muted" style="font-size: 0.75rem;">*Pastikan mulai dengan http:// atau https://</small>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top-0 pt-2">
+                    <button type="button" class="btn btn-light border px-3 fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btnSimpanEdit" onclick="simpanEditSesi()">
+                        <i class="fas fa-save me-1"></i> Simpan ke Server
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL POPUP RIWAYAT MATERI SEBELUMNYA -->
-    <div class="modal fade" id="modalRiwayatMateri" tabindex="-1" aria-labelledby="modalRiwayatMateriLabel" aria-hidden="true">
+    <div class="modal fade" id="modalRiwayatMateri" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div class="modal-content rounded-4 border-0 shadow">
                 <div class="modal-header bg-light border-bottom-0 pb-2">
@@ -295,34 +361,12 @@
                                     <th width="25%">Pengajar</th>
                                 </tr>
                             </thead>
-                            <tbody id="bodyRiwayatMateri">
-                                <!-- Data diinject via Javascript -->
-                            </tbody>
+                            <tbody id="bodyRiwayatMateri"></tbody>
                         </table>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-top-0 pt-2">
                     <button type="button" class="btn btn-secondary rounded-3 px-4 fw-bold" data-bs-dismiss="modal">Tutup</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL POPUP AKSES EDIT -->
-    <div class="modal fade" id="modalEditAkses" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-body text-center p-4">
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 70px; height: 70px;">
-                            <i class="fas fa-shield-alt fs-1 text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Akses Edit Data</h5>
-                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode untuk membuka *Spreadsheet* utama.</p>
-                    <input type="password" id="inputKodeEdit" class="form-control form-control-modern text-center mb-2" placeholder="Kode Admin">
-                    <div id="errorKodeEdit" class="text-danger fw-bold d-none mb-3" style="font-size: 0.8rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode salah!</div>
-                    <button class="btn btn-primary w-100 fw-bold rounded-3 mt-2" onclick="verifikasiEdit()">Buka Google Sheets</button>
                 </div>
             </div>
         </div>
@@ -335,20 +379,133 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
-        // URL asli untuk Edit Data
-        const sheetEditUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/edit#gid=1652385748";
+        // ==========================================
+        // URL GOOGLE APPS SCRIPT (WAJIB DIISI)
+        // ==========================================
+        // Ganti baris di bawah ini dengan URL Web App dari Google Apps Script yang baru Anda buat
+        const SCRIPT_URL = "URL_DARI_LANGKAH_1_PASTE_DISINI"; 
 
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
         let modeRekapanKelas = 'mapel'; 
         let modeRekapanPengajar = 'mapel'; 
-
-        // KODE AKSES RAHASIA
+        
+        let isAdminModeActive = false;
         const KODE_RAHASIA = "admin123"; 
 
-        // Fungsi Buka Layar Terkunci
+        // Fungsi Escape URL Data agar aman diklik
+        function escapeURL(str) {
+            if(!str) return "";
+            return encodeURIComponent(str).replace(/'/g, "%27").replace(/"/g, "%22");
+        }
+
+        // ==========================================
+        // FUNGSI MODE EDIT (CRUD)
+        // ==========================================
+        function toggleAdminMode() {
+            if(isAdminModeActive) {
+                isAdminModeActive = false;
+                $('body').removeClass('admin-mode-active');
+                $('#btnAdminMode').html('<i class="fas fa-edit me-1"></i>Mode Edit Web').removeClass('btn-danger text-white').addClass('btn-light text-primary');
+            } else {
+                $('#inputVerifyAdmin').val('');
+                $('#errorVerifyAdmin').addClass('d-none');
+                $('#inputVerifyAdmin').css('border-color', '');
+                let modal = new bootstrap.Modal(document.getElementById('modalVerifyAdmin'));
+                modal.show();
+            }
+        }
+
+        function prosesVerifyAdmin() {
+            let kode = $('#inputVerifyAdmin').val();
+            if (kode === KODE_RAHASIA) {
+                $('#modalVerifyAdmin').modal('hide');
+                isAdminModeActive = true;
+                $('body').addClass('admin-mode-active');
+                $('#btnAdminMode').html('<i class="fas fa-times me-1"></i>Tutup Mode Edit').removeClass('btn-light text-primary').addClass('btn-danger text-white');
+                
+                // Refresh semua tampilan agar tombol Edit muncul
+                renderPantauanHarian();
+                renderRekapanKelas();
+                renderRekapanPengajar();
+            } else {
+                $('#errorVerifyAdmin').removeClass('d-none');
+                $('#inputVerifyAdmin').css('border-color', '#ef4444');
+                setTimeout(() => {
+                    $('#errorVerifyAdmin').addClass('d-none');
+                    $('#inputVerifyAdmin').css('border-color', '');
+                }, 3000);
+            }
+        }
+        $(document).on('keypress', '#inputVerifyAdmin', function (e) { if (e.which == 13) { prosesVerifyAdmin(); } });
+
+        // Buka Popup Edit Form
+        function bukaModalEditSesi(encTgl, encWaktu, encKelas, encMapel, encMateri, encFolder) {
+            let tgl = decodeURIComponent(encTgl);
+            let waktu = decodeURIComponent(encWaktu);
+            let kelas = decodeURIComponent(encKelas);
+            let mapel = decodeURIComponent(encMapel);
+            let materi = decodeURIComponent(encMateri);
+            let folder = decodeURIComponent(encFolder);
+
+            $('#editTanggalHidden').val(tgl);
+            $('#editWaktuHidden').val(waktu);
+            $('#editKelasHidden').val(kelas);
+            $('#editMapelHidden').val(mapel);
+
+            $('#infoEditSesi').html(`${tgl} | <i class="far fa-clock"></i> ${waktu} <br> <b class="text-primary">${mapel}</b> <span class="badge bg-secondary ms-1">${kelas}</span>`);
+            
+            $('#inputEditMateri').val(materi === '-' ? '' : materi);
+            $('#inputEditFolder').val(folder === '-' ? '' : folder);
+
+            let modal = new bootstrap.Modal(document.getElementById('modalFormEdit'));
+            modal.show();
+        }
+
+        // Kirim Data Hasil Edit Ke Google Sheets API
+        function simpanEditSesi() {
+            if(SCRIPT_URL === "URL_DARI_LANGKAH_1_PASTE_DISINI" || SCRIPT_URL === "") {
+                alert("Anda belum memasukkan URL Google Apps Script. Silakan lakukan Langkah 1 terlebih dahulu!");
+                return;
+            }
+
+            let btn = $('#btnSimpanEdit');
+            btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
+
+            let payload = {
+                tanggal: $('#editTanggalHidden').val(),
+                waktu: $('#editWaktuHidden').val(),
+                kelas: $('#editKelasHidden').val(),
+                mapel: $('#editMapelHidden').val(),
+                materi: $('#inputEditMateri').val(),
+                folder: $('#inputEditFolder').val()
+            };
+
+            // Menggunakan mode no-cors agar bypass masalah keamanan block browser
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                $('#modalFormEdit').modal('hide');
+                btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
+                
+                // Muat ulang data 1.5 detik setelah sukses agar Google Sheet punya waktu update
+                setTimeout(() => {
+                    muatDataCSV();
+                }, 1500);
+            }).catch(err => {
+                alert("Gagal terhubung ke server.");
+                btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
+            });
+        }
+
+        // ==========================================
+        // SISTEM KODE AKSES RAHASIA (TAMPILAN)
+        // ==========================================
         function bukaAkses(btn) {
             let container = $(btn).closest('.lock-screen');
             let inputVal = container.find('.input-kode').val();
@@ -368,47 +525,14 @@
                 }, 3000);
             }
         }
-        $(document).on('keypress', '.input-kode', function (e) {
-            if (e.which == 13) { bukaAkses(this); }
-        });
-
-        // ==========================================
-        // FUNGSI AKSES EDIT SPREADSHEET
-        // ==========================================
-        function bukaModalEdit() {
-            $('#inputKodeEdit').val('');
-            $('#errorKodeEdit').addClass('d-none');
-            $('#inputKodeEdit').css('border-color', '');
-            let modal = new bootstrap.Modal(document.getElementById('modalEditAkses'));
-            modal.show();
-        }
-
-        function verifikasiEdit() {
-            let kode = $('#inputKodeEdit').val();
-            if (kode === KODE_RAHASIA) {
-                $('#modalEditAkses').modal('hide');
-                window.open(sheetEditUrl, '_blank'); // Buka Sheet di Tab Baru
-            } else {
-                $('#errorKodeEdit').removeClass('d-none');
-                $('#inputKodeEdit').css('border-color', '#ef4444');
-                setTimeout(() => {
-                    $('#errorKodeEdit').addClass('d-none');
-                    $('#inputKodeEdit').css('border-color', '');
-                }, 3000);
-            }
-        }
-        $(document).on('keypress', '#inputKodeEdit', function (e) {
-            if (e.which == 13) { verifikasiEdit(); }
-        });
+        $(document).on('keypress', '.input-kode', function (e) { if (e.which == 13) { bukaAkses(this); } });
 
         // ==========================================
         // FUNGSI UBAH LINK JADI TOMBOL KLIK
         // ==========================================
         function parseFolderLinks(folderStr) {
             if (!folderStr || folderStr === '-') return '';
-            
             let urlRegex = /(https?:\/\/[^\s,]+)/g;
-            
             if (urlRegex.test(folderStr)) {
                 let count = 1;
                 let htmlResult = folderStr.replace(urlRegex, function(url) {
@@ -416,7 +540,6 @@
                     count++;
                     return btn;
                 });
-                
                 let textWithoutLink = folderStr.replace(urlRegex, '').trim();
                 if (textWithoutLink.length > 0 && textWithoutLink !== ',') {
                      return `<span class="fw-bold text-dark d-block mb-1" style="font-size: 0.75rem;">${textWithoutLink.replace(/^[,]+|[,]+$/g, '').trim()}</span> ${htmlResult}`;
@@ -424,7 +547,6 @@
                      return htmlResult;
                 }
             }
-            
             return `<span class="fw-bold text-dark">${folderStr}</span>`;
         }
 
@@ -480,7 +602,6 @@
                 $('#filterPengajarPeriode').removeClass('d-flex').addClass('d-none');
                 $('#areaRekapanPengajar').removeClass('d-none');
                 $('#areaRekapanPeriode').addClass('d-none');
-                
                 if(!$('#pilihPengajar').val()) $('#pesanPilihPengajar').removeClass('d-none');
                 else renderRekapanPengajar();
             } else {
@@ -490,7 +611,6 @@
                 $('#areaRekapanPengajar').addClass('d-none');
                 $('#areaRekapanPeriode').removeClass('d-none');
                 $('#pesanPilihPengajar').addClass('d-none');
-                
                 renderRekapanPeriode();
             }
         }
@@ -528,51 +648,50 @@
             $('#pilihPengajar').html(opsiPengajar).select2({ placeholder: "-- Cari Pengajar --", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
         }
 
-        $(document).ready(function() {
-            const tzOffset = (new Date()).getTimezoneOffset() * 60000;
-            const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
-            $('#pilihTanggal').val(todayFormatted);
-
-            Papa.parse(sheetUrl, {
+        function muatDataCSV() {
+            Papa.parse(sheetUrl + "&t=" + new Date().getTime(), {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
                     globalData = results.data.filter(row => row['Hari Tanggal'] && row['Hari Tanggal'].trim() !== '');
-                    
                     let studioUnik = [...new Set(globalData.map(item => item['STUDIO'] ? item['STUDIO'].trim() : ''))];
                     daftarSemuaStudio = studioUnik.filter(s => s !== '' && s !== '-' && s.toLowerCase() !== 'cancel').sort();
                     
-                    let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
-                    cabangUnik = cabangUnik.filter(c => c !== '').sort();
-                    let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
-                    cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
-                    
-                    $('#pilihBagianHarian').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
-                    $('#pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
-                    $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+                    if($('#pilihBagianHarian option').length <= 1) {
+                        let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
+                        cabangUnik = cabangUnik.filter(c => c !== '').sort();
+                        let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
+                        cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
+                        
+                        $('#pilihBagianHarian, #pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
+                        $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
-                    $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
-                    $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
-                    $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
-                    
-                    updateKelasDropdown("Bag. Online");
-                    updatePengajarDropdown("Bag. Online");
+                        $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
+                        $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
+                        $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
+                        
+                        updateKelasDropdown("Bag. Online");
+                        updatePengajarDropdown("Bag. Online");
+                    }
 
                     renderPantauanHarian();
+                    renderRekapanKelas();
+                    renderRekapanPengajar();
+                    renderRekapanPeriode();
                 }
             });
+        }
+
+        $(document).ready(function() {
+            const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+            const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
+            $('#pilihTanggal').val(todayFormatted);
+            muatDataCSV();
         });
 
-        $('#pilihBagianKelas').on('change', function() {
-            updateKelasDropdown($(this).val());
-            renderRekapanKelas();
-        });
-
-        $('#pilihBagianPengajar').on('change', function() {
-            updatePengajarDropdown($(this).val());
-            renderRekapanPengajar();
-        });
+        $('#pilihBagianKelas').on('change', function() { updateKelasDropdown($(this).val()); renderRekapanKelas(); });
+        $('#pilihBagianPengajar').on('change', function() { updatePengajarDropdown($(this).val()); renderRekapanPengajar(); });
 
         // ==========================================
         // RENDER REKAPAN KELAS 
@@ -600,7 +719,6 @@
             let dataKelasIni = globalData.filter(row => {
                 if(!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
-                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -609,7 +727,6 @@
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
-
                 return true;
             });
 
@@ -627,7 +744,6 @@
                     </div>
                 </div>
             `;
-            
             let htmlOutput = statsHtml; 
 
             if(modeRekapanKelas === 'mapel') {
@@ -653,14 +769,23 @@
                             else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                         }
 
-                        let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                        if(folder && folder !== '-') {
-                            materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
-                        }
+                        let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                        let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
 
-                        tbodyHtml += `<tr class="${rowClass}">
-                            <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
+                        let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                        if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+
+                        let encTgl = escapeURL(sesi['Hari Tanggal']);
+                        let encWaktu = escapeURL(sesi['WAKTU']);
+                        let encKelas = escapeURL(sesi['KELAS']);
+                        let encMapel = escapeURL(sesi['MAPEL']);
+                        let encMateri = escapeURL(rawMateri);
+                        let encFolder = escapeURL(rawFolder);
+
+                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
+
+                        tbodyHtml += `<tr class="${rowClass} position-relative">
+                            <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
                             <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                             <td><div class="fw-bold" style="line-height: 1.25;">${materiHtml}</div></td>
                             <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
@@ -677,7 +802,7 @@
                                     </div>
                                 </div>
                                 <div id="collapseKelas${mapelIndex}" class="collapse">
-                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 30%;">Tanggal</th><th style="width: 15%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Pengajar</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                                 </div>
                             </div>
                         </div>
@@ -712,14 +837,23 @@
                         else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
-                    let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                    let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                    if(folder && folder !== '-') {
-                        materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
-                    }
+                    let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                    let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+
+                    let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                    if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+
+                    let encTgl = escapeURL(sesi['Hari Tanggal']);
+                    let encWaktu = escapeURL(sesi['WAKTU']);
+                    let encKelas = escapeURL(sesi['KELAS']);
+                    let encMapel = escapeURL(sesi['MAPEL']);
+                    let encMateri = escapeURL(rawMateri);
+                    let encFolder = escapeURL(rawFolder);
+
+                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                     tbodyHtml += `<tr class="${rowClass}">
-                        <td class="text-center text-muted fw-bold">${noUrut++}</td>
+                        <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
                         <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                         <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
@@ -739,9 +873,9 @@
                                 <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
                                     <thead class="text-center">
                                         <tr>
-                                            <th width="5%">No</th>
+                                            <th width="10%">No</th>
                                             <th width="20%">Tanggal</th>
-                                            <th width="15%">Jam</th>
+                                            <th width="10%">Jam</th>
                                             <th width="20%">Mapel</th>
                                             <th width="25%">Materi</th>
                                             <th width="15%">Pengajar</th>
@@ -786,11 +920,9 @@
 
             let dataPengajarIni = globalData.filter(row => {
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
-                
                 if(!row['PENGAJAR']) return false;
                 let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                 if(!namaPecah.includes(selectedPengajar)) return false;
-                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -799,7 +931,6 @@
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
-
                 return true;
             });
 
@@ -843,14 +974,23 @@
                             else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                         }
 
-                        let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                        if(folder && folder !== '-') {
-                            materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
-                        }
+                        let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                        let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
 
-                        tbodyHtml += `<tr class="${rowClass}">
-                            <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
+                        let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                        if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+
+                        let encTgl = escapeURL(sesi['Hari Tanggal']);
+                        let encWaktu = escapeURL(sesi['WAKTU']);
+                        let encKelas = escapeURL(sesi['KELAS']);
+                        let encMapel = escapeURL(sesi['MAPEL']);
+                        let encMateri = escapeURL(rawMateri);
+                        let encFolder = escapeURL(rawFolder);
+
+                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
+
+                        tbodyHtml += `<tr class="${rowClass} position-relative">
+                            <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
                             <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                             <td><div class="fw-bold" style="line-height: 1.25;">${materiHtml}</div></td>
                             <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
@@ -867,7 +1007,7 @@
                                     </div>
                                 </div>
                                 <div id="collapsePengajar${mapelIndex}" class="collapse">
-                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 25%;">Tanggal</th><th style="width: 20%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
+                                    <div class="table-responsive mb-0" style="max-height: 250px; overflow-y: auto;"><table class="table mapel-table mb-0 table-hover table-sm"><thead><tr><th style="width: 30%;">Tanggal</th><th style="width: 15%;">Jam</th><th style="width: 35%;">Materi</th><th style="width: 20%;">Kelas</th></tr></thead><tbody>${tbodyHtml}</tbody></table></div>
                                 </div>
                             </div>
                         </div>
@@ -901,14 +1041,23 @@
                         else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
-                    let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                    let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                    if(folder && folder !== '-') {
-                        materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
-                    }
+                    let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                    let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+
+                    let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                    if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+
+                    let encTgl = escapeURL(sesi['Hari Tanggal']);
+                    let encWaktu = escapeURL(sesi['WAKTU']);
+                    let encKelas = escapeURL(sesi['KELAS']);
+                    let encMapel = escapeURL(sesi['MAPEL']);
+                    let encMateri = escapeURL(rawMateri);
+                    let encFolder = escapeURL(rawFolder);
+
+                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                     tbodyHtml += `<tr class="${rowClass}">
-                        <td class="text-center text-muted fw-bold">${noUrut++}</td>
+                        <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
                         <td><span class="badge bg-light text-warning border border-warning-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                         <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
@@ -928,9 +1077,9 @@
                                 <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
                                     <thead class="text-center">
                                         <tr>
-                                            <th width="5%">No</th>
+                                            <th width="10%">No</th>
                                             <th width="20%">Tanggal</th>
-                                            <th width="15%">Jam</th>
+                                            <th width="10%">Jam</th>
                                             <th width="20%">Mapel</th>
                                             <th width="25%">Materi</th>
                                             <th width="15%">Kelas</th>
@@ -987,17 +1136,19 @@
                     let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                     namaPecah.forEach(nama => {
                         if(nama !== '' && nama.toLowerCase() !== 'cancel' && nama !== '-') {
-                            
-                            let materiDetail = row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '<span class="fst-italic text-muted">Belum diisi</span>';
-                            let folderDetail = row['FOLDER IPAD PEMBAHASAN'] ? row['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                            if(folderDetail && folderDetail !== '-') {
-                                materiDetail += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folderDetail)}</div>`;
-                            }
+                            let rawMateri = row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '';
+                            let rawFolder = row['FOLDER IPAD PEMBAHASAN'] ? row['FOLDER IPAD PEMBAHASAN'].trim() : '';
+
+                            let materiDetail = rawMateri ? rawMateri : '<span class="fst-italic text-muted">Belum diisi</span>';
+                            if(rawFolder && rawFolder !== '-') materiDetail += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
 
                             detailedSessions.push({
+                                rawRow: row,
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
-                                materi: materiDetail,
+                                materiHtml: materiDetail,
+                                rawMateri: rawMateri,
+                                rawFolder: rawFolder,
                                 kelas: row['KELAS'] ? row['KELAS'].trim() : '-',
                                 tanggalObj: parseDateFromCSV(row['Hari Tanggal']),
                                 tanggalAsli: row['Hari Tanggal'] || '-',
@@ -1036,15 +1187,24 @@
                     sesiKe++;
                 }
 
+                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal']);
+                let encWaktu = escapeURL(sesi.rawRow['WAKTU']);
+                let encKelas = escapeURL(sesi.rawRow['KELAS']);
+                let encMapel = escapeURL(sesi.rawRow['MAPEL']);
+                let encMateri = escapeURL(sesi.rawMateri);
+                let encFolder = escapeURL(sesi.rawFolder);
+
+                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>` : '';
+
                 tbody += `
                     <tr>
-                        <td class="text-center text-muted">${overallNo}</td>
+                        <td class="text-center text-muted"><div class="d-flex justify-content-center align-items-center">${btnEdit}${overallNo}</div></td>
                         <td>
                             <div class="fw-bold text-dark text-nowrap">${sesi.namaPengajar}</div>
                             <div style="font-size: 0.75rem;" class="text-muted mt-1"><i class="far fa-calendar-alt me-1"></i>${sesi.tanggalAsli} &nbsp;|&nbsp; <i class="far fa-clock me-1"></i>${sesi.waktuAsli}</div>
                         </td>
                         <td><span class="badge bg-primary text-white bg-opacity-75">${sesi.mapel}</span></td>
-                        <td style="max-width: 300px;">${sesi.materi}</td>
+                        <td style="max-width: 300px;">${sesi.materiHtml}</td>
                         <td><span class="badge border border-secondary text-secondary">${sesi.kelas}</span></td>
                         <td class="text-center fw-bold text-success fs-6">${sesiKe}</td>
                     </tr>
@@ -1063,12 +1223,12 @@
                             <table class="table table-hover align-middle table-periode" style="min-width: 800px;">
                                 <thead class="text-center">
                                     <tr>
-                                        <th width="5%">No</th>
+                                        <th width="10%">No</th>
                                         <th width="20%">Nama Pengajar & Waktu</th>
                                         <th width="15%">Mapel</th>
                                         <th width="35%">Materi</th>
                                         <th width="15%">Kelas</th>
-                                        <th width="10%">Sesi Ke</th>
+                                        <th width="5%">Sesi Ke</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1130,10 +1290,10 @@
             
             if (!lPrevMateri || lPrevMateri === '-') return "";
 
-            let encodedKelas = encodeURIComponent(currentKelas);
-            let encodedMapel = encodeURIComponent(currentMapel);
-            let encodedTgl = encodeURIComponent(sesi['Hari Tanggal'] || '');
-            let encodedWaktu = encodeURIComponent(sesi['WAKTU'] || '');
+            let encodedKelas = escapeURL(currentKelas);
+            let encodedMapel = escapeURL(currentMapel);
+            let encodedTgl = escapeURL(sesi['Hari Tanggal']);
+            let encodedWaktu = escapeURL(sesi['WAKTU']);
 
             return `<div class="mt-3 d-flex justify-content-between align-items-start">
                         <div>
@@ -1199,21 +1359,31 @@
                             else if (currentMinutes >= waktuParsed.start && currentMinutes <= waktuParsed.end) { statusHtml = '<span class="badge-live ms-2"><i class="fas fa-broadcast-tower me-1"></i>LIVE</span>'; itemClass = "item-live"; }
                         }
                         
-                        let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
-                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                        let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         let prevMateriHtml = buildPrevMateriHtml(sesi);
                         
                         let tambahanHtml = "";
-                        if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
+                        if((rawMateri && rawMateri !== '-') || (rawFolder && rawFolder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-3 pt-2 border-top border-secondary border-opacity-25" style="font-size:0.8rem; color:#475569;">`;
-                            if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(folder)}</div></div>`;
+                            if(rawMateri && rawMateri !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${rawMateri}</div>`;
+                            if(rawFolder && rawFolder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(rawFolder)}</div></div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
-                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                            <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
+                        let encTgl = escapeURL(sesi['Hari Tanggal']);
+                        let encWaktu = escapeURL(sesi['WAKTU']);
+                        let encKelas = escapeURL(sesi['KELAS']);
+                        let encMapel = escapeURL(sesi['MAPEL']);
+                        let encMateri = escapeURL(rawMateri);
+                        let encFolder = escapeURL(rawFolder);
+
+                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
+
+                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 position-relative ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                            ${btnEdit}
+                            <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end mt-4 mt-sm-0" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
                             <div class="fw-bold text-dark my-1" style="font-size:0.95rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
                             <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
                             <div class="mt-auto">
@@ -1259,25 +1429,35 @@
                         if (studio !== '-' && studio !== '' && studioCounts[studio] > 1) { isBentrok = true; adaBentrokGlobal = true; }
                         let itemClass = isGrupSelesai ? "item-selesai" : "";
                         
-                        let materi = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
-                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        let rawMateri = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '';
+                        let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
                         let prevMateriHtml = buildPrevMateriHtml(sesi);
                         
                         let tambahanHtml = "";
-                        if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
+                        if((rawMateri && rawMateri !== '-') || (rawFolder && rawFolder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-3 pt-2 border-top border-secondary border-opacity-25" style="font-size:0.8rem; color:#475569;">`;
-                            if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(folder)}</div></div>`;
+                            if(rawMateri && rawMateri !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${rawMateri}</div>`;
+                            if(rawFolder && rawFolder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(rawFolder)}</div></div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
+                        let encTgl = escapeURL(sesi['Hari Tanggal']);
+                        let encWaktu = escapeURL(sesi['WAKTU']);
+                        let encKelas = escapeURL(sesi['KELAS']);
+                        let encMapel = escapeURL(sesi['MAPEL']);
+                        let encMateri = escapeURL(rawMateri);
+                        let encFolder = escapeURL(rawFolder);
+
+                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
+
                         htmlSesi += `
                         <div class="col-md-6 col-lg-4 col-xl-3 mb-3 d-flex">
-                            <div class="jadwal-item w-100 d-flex flex-column shadow-sm ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                            <div class="jadwal-item w-100 d-flex flex-column shadow-sm position-relative ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                                ${btnEdit}
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <span class="text-primary fw-bold" style="font-size:0.9rem;"><i class="fas fa-video me-1"></i> ${studio}</span>
-                                    <span class="badge-soft text-end" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span>
+                                    <span class="badge-soft text-end mt-4 mt-sm-0" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span>
                                 </div>
                                 <div class="fw-bold text-dark my-1" style="font-size:1rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
                                 <div style="font-size:0.8rem; color:#64748b;" class="mb-2">
