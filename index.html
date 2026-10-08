@@ -81,6 +81,8 @@
         
         .table-periode th, .table-periode td { border: 1px solid #e2e8f0; }
         .table-periode thead th { background-color: #f1f5f9; color: #334155; }
+
+        .btn-link-folder:hover { opacity: 0.85; transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -318,6 +320,7 @@
         let modeRekapanKelas = 'mapel'; 
         let modeRekapanPengajar = 'mapel'; 
 
+        // KODE AKSES RAHASIA
         const KODE_RAHASIA = "admin123"; 
 
         function bukaAkses(btn) {
@@ -343,6 +346,26 @@
         $(document).on('keypress', '.input-kode', function (e) {
             if (e.which == 13) { bukaAkses(this); }
         });
+
+        // ==========================================
+        // FUNGSI UBAH LINK JADI TOMBOL KLIK (URL DETECTOR)
+        // ==========================================
+        function parseFolderLinks(folderStr) {
+            if (!folderStr || folderStr === '-') return '';
+            
+            // Regex mencari link http / https yang dipisahkan koma atau spasi
+            let urlRegex = /(https?:\/\/[^\s,]+)/g;
+            
+            if (urlRegex.test(folderStr)) {
+                let count = 1;
+                return folderStr.replace(urlRegex, function(url) {
+                    let btn = `<a href="${url}" target="_blank" class="badge bg-warning text-dark text-decoration-none border border-warning px-2 py-1 ms-1 mb-1 shadow-sm btn-link-folder" style="font-size: 0.65rem; transition:0.2s;"><i class="fas fa-external-link-alt me-1"></i>Buka File ${count}</a>`;
+                    count++;
+                    return btn;
+                });
+            }
+            return folderStr; // Kembalikan teks asli jika bukan link valid
+        }
 
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -569,10 +592,16 @@
                             else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                         }
 
+                        let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        if(folder && folder !== '-') {
+                            materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
+                        }
+
                         tbodyHtml += `<tr class="${rowClass}">
                             <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
                             <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                            <td><div class="fw-bold" style="line-height: 1.25;">${materiHtml}</div></td>
                             <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
                         </tr>`;
                     });
@@ -622,12 +651,18 @@
                         else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
+                    let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                    let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    if(folder && folder !== '-') {
+                        materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
+                    }
+
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold">${noUrut++}</td>
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
                         <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                         <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
-                        <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                        <td><div style="line-height: 1.25;">${materiHtml}</div></td>
                         <td><i class="fas fa-user-tie opacity-75 me-1"></i>${sesi['PENGAJAR'] || '-'}</td>
                     </tr>`;
                 });
@@ -747,10 +782,16 @@
                             else { statusBadge = '<span class="badge bg-primary mt-1" style="font-size:0.6rem;">Mendatang</span>'; }
                         }
 
+                        let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                        let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                        if(folder && folder !== '-') {
+                            materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
+                        }
+
                         tbodyHtml += `<tr class="${rowClass}">
                             <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</td>
                             <td><span class="badge bg-light text-primary border border-primary-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
-                            <td><div class="fw-bold" style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                            <td><div class="fw-bold" style="line-height: 1.25;">${materiHtml}</div></td>
                             <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
                         </tr>`;
                     });
@@ -799,12 +840,18 @@
                         else { statusBadge = '<span class="badge bg-primary ms-2" style="font-size:0.6rem;">Mendatang</span>'; }
                     }
 
+                    let materiHtml = sesi['MATERI YANG DIBAHAS'] ? sesi['MATERI YANG DIBAHAS'].trim() : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
+                    let folder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    if(folder && folder !== '-') {
+                        materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folder)}</div>`;
+                    }
+
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold">${noUrut++}</td>
                         <td><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'} ${statusBadge}</div></td>
                         <td><span class="badge bg-light text-warning border border-warning-subtle px-1" style="font-size:0.65rem;"><i class="far fa-clock"></i> ${sesi['WAKTU'] || '-'}</span></td>
                         <td><div class="fw-bold text-dark" style="font-size:0.85rem;">${sesi['MAPEL'] || '-'}</div></td>
-                        <td><div style="line-height: 1.25;">${sesi['MATERI YANG DIBAHAS'] || '<span class="fw-normal fst-italic text-muted">Belum diisi</span>'}</div></td>
+                        <td><div style="line-height: 1.25;">${materiHtml}</div></td>
                         <td><span class="badge bg-secondary text-wrap" style="font-size:0.65rem; max-width:100px;">${sesi['KELAS'] || '-'}</span></td>
                     </tr>`;
                 });
@@ -879,10 +926,17 @@
                     let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                     namaPecah.forEach(nama => {
                         if(nama !== '' && nama.toLowerCase() !== 'cancel' && nama !== '-') {
+                            
+                            let materiDetail = row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '<span class="fst-italic text-muted">Belum diisi</span>';
+                            let folderDetail = row['FOLDER IPAD PEMBAHASAN'] ? row['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                            if(folderDetail && folderDetail !== '-') {
+                                materiDetail += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(folderDetail)}</div>`;
+                            }
+
                             detailedSessions.push({
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
-                                materi: row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '<span class="fst-italic text-muted">Belum diisi</span>',
+                                materi: materiDetail,
                                 kelas: row['KELAS'] ? row['KELAS'].trim() : '-',
                                 tanggalObj: parseDateFromCSV(row['Hari Tanggal']),
                                 tanggalAsli: row['Hari Tanggal'] || '-',
@@ -1025,7 +1079,7 @@
                             <i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br>
                             <em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary ms-2 flex-shrink-0 fw-bold" style="font-size:0.65rem; padding: 0.15rem 0.4rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
+                        <button class="btn btn-sm btn-outline-primary ms-2 flex-shrink-0 fw-bold shadow-sm" style="font-size:0.65rem; padding: 0.2rem 0.5rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
                     </div>`;
         }
 
@@ -1092,7 +1146,7 @@
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-center"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> ${parseFolderLinks(folder)}</div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
@@ -1150,7 +1204,7 @@
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
                             tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-folder text-warning me-1"></i> <strong>Folder iPad:</strong> ${folder}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-center"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> ${parseFolderLinks(folder)}</div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
@@ -1224,6 +1278,11 @@
                     let hTanggal = h['Hari Tanggal'] || '-';
                     let hWaktu = h['WAKTU'] || '-';
                     let hMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '<em class="text-muted">Belum diisi</em>';
+                    let hFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    if (hFolder && hFolder !== '-') {
+                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(hFolder)}</div>`;
+                    }
+                    
                     let hPengajar = h['PENGAJAR'] || '-';
 
                     tbody += `
