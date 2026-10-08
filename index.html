@@ -353,18 +353,30 @@
         function parseFolderLinks(folderStr) {
             if (!folderStr || folderStr === '-') return '';
             
-            // Regex mencari link http / https yang dipisahkan koma atau spasi
+            // Regex mencari link http / https yang dipisahkan spasi, koma, atau baris baru
             let urlRegex = /(https?:\/\/[^\s,]+)/g;
             
             if (urlRegex.test(folderStr)) {
                 let count = 1;
-                return folderStr.replace(urlRegex, function(url) {
+                // Mengubah semua teks link (http...) menjadi tombol
+                let htmlResult = folderStr.replace(urlRegex, function(url) {
                     let btn = `<a href="${url}" target="_blank" class="badge bg-warning text-dark text-decoration-none border border-warning px-2 py-1 ms-1 mb-1 shadow-sm btn-link-folder" style="font-size: 0.65rem; transition:0.2s;"><i class="fas fa-external-link-alt me-1"></i>Buka File ${count}</a>`;
                     count++;
                     return btn;
                 });
+                
+                // Cek jika teks aslinya bukan HANYA link (ada teks judul/keterangannya juga)
+                let textWithoutLink = folderStr.replace(urlRegex, '').trim();
+                if (textWithoutLink.length > 0 && textWithoutLink !== ',') {
+                     // Tampilkan teks sisanya dengan cetak tebal
+                     return `<span class="fw-bold text-dark d-block mb-1" style="font-size: 0.75rem;">${textWithoutLink.replace(/^[,]+|[,]+$/g, '').trim()}</span> ${htmlResult}`;
+                } else {
+                     return htmlResult;
+                }
             }
-            return folderStr; // Kembalikan teks asli jika bukan link valid
+            
+            // Jika tidak ada link http, kembalikan teks aslinya secara tebal (biasanya hanya nama file)
+            return `<span class="fw-bold text-dark">${folderStr}</span>`;
         }
 
         const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -1210,7 +1222,7 @@
                         }
 
                         htmlSesi += `<div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                            <div class="d-flex justify-content-between align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
+                            <div class="d-flex justify-content-between align-items-center"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
                             <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
                             <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
                             ${tambahanHtml}
