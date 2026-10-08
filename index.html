@@ -1086,7 +1086,7 @@
             let encodedTgl = encodeURIComponent(sesi['Hari Tanggal'] || '');
             let encodedWaktu = encodeURIComponent(sesi['WAKTU'] || '');
 
-            return `<div class="mt-2 d-flex justify-content-between align-items-start">
+            return `<div class="mt-3 d-flex justify-content-between align-items-start">
                         <div>
                             <i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br>
                             <em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em>
@@ -1156,21 +1156,23 @@
                         
                         let tambahanHtml = "";
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
-                            tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
+                            tambahanHtml += `<div class="mt-3 pt-2 border-top border-secondary border-opacity-25" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-center"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> ${parseFolderLinks(folder)}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(folder)}</div></div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
-                        htmlSesi += `<div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                            <div class="d-flex justify-content-between align-items-center"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
-                            <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
+                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                            <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
+                            <div class="fw-bold text-dark my-1" style="font-size:0.95rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
                             <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
-                            ${tambahanHtml}
+                            <div class="mt-auto">
+                                ${tambahanHtml}
+                            </div>
                         </div>`;
                     });
-                    htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header text-uppercase"><i class="fas fa-video me-2 text-primary"></i>${studio}</div><div class="sesi-container">${htmlSesi}</div></div></div>`;
+                    htmlOutput += `<div class="col-md-6 col-lg-3 mb-4 d-flex"><div class="group-card w-100"><div class="group-header text-uppercase"><i class="fas fa-video me-2 text-primary"></i>${studio}</div><div class="sesi-container">${htmlSesi}</div></div></div>`;
                 });
 
             } else {
@@ -1196,10 +1198,10 @@
                     let studioCounts = {}; overlappingStudios.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
                     
                     let statusGrupHtml = ""; let isGrupSelesai = false;
-                    if (selectedDateVal < todayRealStr) { statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true; }
+                    if (selectedDateVal < todayRealStr) { statusGrupHtml = '<span class="badge-selesai px-2 py-1"><i class="fas fa-check-double me-1"></i>Selesai</span>'; isGrupSelesai = true; }
                     else if (selectedDateVal === todayRealStr && waktuJamGroup) {
-                        if (currentMinutes > waktuJamGroup.end) { statusGrupHtml = '<span class="badge-selesai float-end"><i class="fas fa-check-double"></i></span>'; isGrupSelesai = true; }
-                        else if (currentMinutes >= waktuJamGroup.start && currentMinutes <= waktuJamGroup.end) { statusGrupHtml = '<span class="badge-live float-end"><i class="fas fa-broadcast-tower"></i></span>'; }
+                        if (currentMinutes > waktuJamGroup.end) { statusGrupHtml = '<span class="badge-selesai px-2 py-1"><i class="fas fa-check-double me-1"></i>Selesai</span>'; isGrupSelesai = true; }
+                        else if (currentMinutes >= waktuJamGroup.start && currentMinutes <= waktuJamGroup.end) { statusGrupHtml = '<span class="badge-live px-2 py-1"><i class="fas fa-broadcast-tower me-1"></i>Sedang Berlangsung</span>'; }
                     }
 
                     let htmlSesi = "";
@@ -1214,26 +1216,52 @@
                         
                         let tambahanHtml = "";
                         if((materi && materi !== '-') || (folder && folder !== '-') || prevMateriHtml !== "") {
-                            tambahanHtml += `<div class="mt-2 pt-2 border-top" style="font-size:0.8rem; color:#475569;">`;
+                            tambahanHtml += `<div class="mt-3 pt-2 border-top border-secondary border-opacity-25" style="font-size:0.8rem; color:#475569;">`;
                             if(materi && materi !== '-') tambahanHtml += `<div class="mb-1"><i class="fas fa-book-open text-info me-1"></i> <strong>Materi:</strong> ${materi}</div>`;
-                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-center"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> ${parseFolderLinks(folder)}</div>`;
+                            if(folder && folder !== '-') tambahanHtml += `<div class="mb-1 d-flex flex-wrap align-items-start"><i class="fas fa-folder text-warning me-1 mt-1"></i> <strong class="me-2 mt-1">Folder iPad:</strong> <div class="mt-1">${parseFolderLinks(folder)}</div></div>`;
                             if(prevMateriHtml !== '') tambahanHtml += prevMateriHtml;
                             tambahanHtml += `</div>`;
                         }
 
-                        htmlSesi += `<div class="jadwal-item ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
-                            <div class="d-flex justify-content-between align-items-center"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="fas fa-video me-1"></i> ${studio}</span><span class="badge-soft">${sesi['KELAS'] || '-'}</span></div>
-                            <div class="fw-bold text-dark my-1" style="font-size:0.95rem;">${sesi['MAPEL'] || '-'}</div>
-                            <div style="font-size:0.8rem; color:#64748b;"><i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br><i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}</div>
-                            ${tambahanHtml}
+                        htmlSesi += `
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-3 d-flex">
+                            <div class="jadwal-item w-100 d-flex flex-column shadow-sm ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="text-primary fw-bold" style="font-size:0.9rem;"><i class="fas fa-video me-1"></i> ${studio}</span>
+                                    <span class="badge-soft text-end" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span>
+                                </div>
+                                <div class="fw-bold text-dark my-1" style="font-size:1rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
+                                <div style="font-size:0.8rem; color:#64748b;" class="mb-2">
+                                    <i class="fas fa-user-tie me-1"></i> ${sesi['PENGAJAR'] || '-'} <br>
+                                    <i class="fas fa-headset me-1 mt-1"></i> OP: ${sesi['OP ZOOM'] || '-'}
+                                </div>
+                                <div class="mt-auto">
+                                    ${tambahanHtml}
+                                </div>
+                            </div>
                         </div>`;
                     });
 
                     let studioTersisa = daftarSemuaStudio.filter(s => !studioCounts[s]); let htmlStudioKosong = "";
-                    if(studioTersisa.length > 0) { htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="text-muted fw-bold mb-2" style="font-size:0.7rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</div><div class="d-flex flex-wrap gap-1">${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.7rem;">${s}</span>`).join('')}</div></div>`; }
-                    else { htmlStudioKosong = `<div class="mt-2 pt-3 border-top border-dashed border-secondary border-opacity-25"><div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle w-100 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Terpakai</div></div>`; }
+                    if(studioTersisa.length > 0) { 
+                        htmlStudioKosong = `<div class="d-flex align-items-center flex-wrap gap-2"><span class="text-muted fw-bold me-1" style="font-size:0.8rem; letter-spacing: 0.5px;"><i class="fas fa-door-open text-success me-1"></i> STUDIO TERSEDIA:</span> ${studioTersisa.map(s => `<span class="badge bg-light text-success border border-success-subtle px-2 py-1 fw-medium" style="font-size:0.75rem;">${s}</span>`).join('')}</div>`; 
+                    } else { 
+                        htmlStudioKosong = `<div class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-3 py-2"><i class="fas fa-times-circle me-1"></i> Semua Studio Terpakai pada sesi ini</div>`; 
+                    }
 
-                    htmlOutput += `<div class="col-md-6 col-lg-3 mb-4"><div class="group-card"><div class="group-header"><i class="far fa-clock me-2 text-primary"></i>Sesi: ${jam} ${statusGrupHtml}</div><div class="sesi-container">${htmlSesi} ${htmlStudioKosong}</div></div></div>`;
+                    htmlOutput += `
+                    <div class="col-12 mb-5">
+                        <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                            <h4 class="fw-bolder text-dark mb-0"><i class="far fa-clock text-primary me-2"></i>Sesi ${jam} WIB</h4>
+                            <div class="ms-3">${statusGrupHtml}</div>
+                        </div>
+                        <div class="row align-items-stretch">
+                            ${htmlSesi}
+                        </div>
+                        <div class="mt-2 p-3 bg-white rounded-3 shadow-sm border border-light">
+                            ${htmlStudioKosong}
+                        </div>
+                    </div>`;
                 });
             }
 
