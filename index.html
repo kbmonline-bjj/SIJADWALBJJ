@@ -380,7 +380,7 @@
 
     <script>
         // ==========================================
-        // URL GOOGLE APPS SCRIPT
+        // URL GOOGLE APPS SCRIPT (SUDAH TERSAMBUNG)
         // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
 
@@ -462,32 +462,35 @@
             modal.show();
         }
 
-        // Kirim Data Hasil Edit Ke Google Sheets API Menggunakan URLSearchParams
+        // Kirim Data Hasil Edit Ke Google Sheets
         function simpanEditSesi() {
             let btn = $('#btnSimpanEdit');
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
 
-            // MENGGUNAKAN FORM DATA AGAR TERBACA OLEH e.parameter DI APPS SCRIPT
-            let payload = new URLSearchParams();
-            payload.append("tanggal", $('#editTanggalHidden').val());
-            payload.append("waktu", $('#editWaktuHidden').val());
-            payload.append("kelas", $('#editKelasHidden').val());
-            payload.append("mapel", $('#editMapelHidden').val());
-            payload.append("materi", $('#inputEditMateri').val());
-            payload.append("folder", $('#inputEditFolder').val());
+            // MENGIRIM SEBAGAI STRING JSON MURNI (TEXT/PLAIN)
+            let payload = {
+                tanggal: $('#editTanggalHidden').val(),
+                waktu: $('#editWaktuHidden').val(),
+                kelas: $('#editKelasHidden').val(),
+                mapel: $('#editMapelHidden').val(),
+                materi: $('#inputEditMateri').val(),
+                folder: $('#inputEditFolder').val()
+            };
 
             fetch(SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors", 
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "text/plain;charset=utf-8"
                 },
-                body: payload
+                body: JSON.stringify(payload)
             }).then(() => {
                 $('#modalFormEdit').modal('hide');
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
                 
-                // Refresh data setelah 1.5 detik agar Sheets sempat memperbarui datanya
+                alert("Perubahan berhasil dikirim ke Google Sheets!");
+                
+                // Refresh data web 1.5 detik kemudian agar Sheet sudah selesai memproses
                 setTimeout(() => { muatDataCSV(); }, 1500);
             }).catch(err => {
                 alert("Gagal terhubung ke server.");
@@ -496,7 +499,7 @@
         }
 
         // ==========================================
-        // SISTEM KODE AKSES RAHASIA (TAMPILAN)
+        // SISTEM KODE AKSES RAHASIA (TAMPILAN KUNCI)
         // ==========================================
         function bukaAkses(btn) {
             let container = $(btn).closest('.lock-screen');
@@ -1104,7 +1107,7 @@
         $('#pilihPengajar, #pilihBagianPengajar, #startDatePengajar, #endDatePengajar').on('change', renderRekapanPengajar);
 
         // ==========================================
-        // RENDER REKAPAN PENGAJAR (DETAIL PERIODE)
+        // RENDER REKAPAN PERIODE (TAB PENGAJAR)
         // ==========================================
         function renderRekapanPeriode() {
             let selectedCabang = $('#pilihCabangPeriode').val();
@@ -1150,7 +1153,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row,
+                                rawRow: row, // Menyimpan referensi row untuk tombol edit
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
@@ -1194,14 +1197,14 @@
                     sesiKe++;
                 }
 
-                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal']);
-                let encWaktu = escapeURL(sesi.rawRow['WAKTU']);
-                let encKelas = escapeURL(sesi.rawRow['KELAS']);
-                let encMapel = escapeURL(sesi.rawRow['MAPEL']);
+                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal'] || '');
+                let encWaktu = escapeURL(sesi.rawRow['WAKTU'] || '');
+                let encKelas = escapeURL(sesi.rawRow['KELAS'] || '');
+                let encMapel = escapeURL(sesi.rawRow['MAPEL'] || '');
                 let encMateri = escapeURL(sesi.rawMateri);
                 let encFolder = escapeURL(sesi.rawFolder);
 
-                let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
+                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>` : '';
 
                 tbody += `
                     <tr class="position-relative">
@@ -1505,6 +1508,78 @@
             if (adaBentrokGlobal) $('#peringatanBentrokUtama').removeClass('d-none');
         }
         $('#pilihTanggal, #pilihBagianHarian').on('change', renderPantauanHarian);
+
+        // ==========================================
+        // FUNGSI BUKA MODAL RIWAYAT MATERI
+        // ==========================================
+        function bukaRiwayatMateri(encKelas, encMapel, encTgl, encWaktu) {
+            let kelas = decodeURIComponent(encKelas);
+            let mapel = decodeURIComponent(encMapel);
+            let tgl = decodeURIComponent(encTgl);
+            let waktu = decodeURIComponent(encWaktu);
+
+            let targetDateObj = parseDateFromCSV(tgl);
+            let targetWaktu = parseWaktuToMinutes(waktu);
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== kelas) return false;
+                if ((r['MAPEL'] || '').trim() !== mapel) return false;
+                
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
+                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
+                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
+                }
+                return false;
+            });
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let tbody = "";
+            if (history.length === 0) {
+                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
+            } else {
+                history.forEach((h) => {
+                    let hTanggal = h['Hari Tanggal'] || '-';
+                    let hWaktu = h['WAKTU'] || '-';
+                    let hMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '<em class="text-muted">Belum diisi</em>';
+                    let hFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    if (hFolder && hFolder !== '-') {
+                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(hFolder)}</div>`;
+                    }
+                    
+                    let hPengajar = h['PENGAJAR'] || '-';
+
+                    tbody += `
+                    <tr>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
+                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
+                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
+            $('#bodyRiwayatMateri').html(tbody);
+            
+            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
+            modal.show();
+        }
 
     </script>
 </body>
