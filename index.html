@@ -293,7 +293,7 @@
                         </div>
                     </div>
                     <h5 class="fw-bold mb-2">Aktivasi Mode Edit</h5>
-                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk mengaktifkan fitur pengeditan *Web App*.</p>
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk bisa mengedit data secara langsung (CRUD).</p>
                     <input type="password" id="inputVerifyAdmin" class="form-control form-control-modern text-center mb-2" placeholder="Kode Admin">
                     <div id="errorVerifyAdmin" class="text-danger fw-bold d-none mb-3" style="font-size: 0.8rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode salah!</div>
                     <button class="btn btn-primary w-100 fw-bold rounded-3 mt-2" onclick="prosesVerifyAdmin()">Aktifkan Edit Web</button>
@@ -380,10 +380,9 @@
 
     <script>
         // ==========================================
-        // URL GOOGLE APPS SCRIPT (WAJIB DIISI)
+        // URL GOOGLE APPS SCRIPT
         // ==========================================
-        // Ganti baris di bawah ini dengan URL Web App dari Google Apps Script yang baru Anda buat
-        const SCRIPT_URL = "URL_DARI_LANGKAH_1_PASTE_DISINI"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
 
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
@@ -426,7 +425,6 @@
                 $('body').addClass('admin-mode-active');
                 $('#btnAdminMode').html('<i class="fas fa-times me-1"></i>Tutup Mode Edit').removeClass('btn-light text-primary').addClass('btn-danger text-white');
                 
-                // Refresh semua tampilan agar tombol Edit muncul
                 renderPantauanHarian();
                 renderRekapanKelas();
                 renderRekapanPengajar();
@@ -464,39 +462,33 @@
             modal.show();
         }
 
-        // Kirim Data Hasil Edit Ke Google Sheets API
+        // Kirim Data Hasil Edit Ke Google Sheets API Menggunakan URLSearchParams
         function simpanEditSesi() {
-            if(SCRIPT_URL === "URL_DARI_LANGKAH_1_PASTE_DISINI" || SCRIPT_URL === "") {
-                alert("Anda belum memasukkan URL Google Apps Script. Silakan lakukan Langkah 1 terlebih dahulu!");
-                return;
-            }
-
             let btn = $('#btnSimpanEdit');
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
 
-            let payload = {
-                tanggal: $('#editTanggalHidden').val(),
-                waktu: $('#editWaktuHidden').val(),
-                kelas: $('#editKelasHidden').val(),
-                mapel: $('#editMapelHidden').val(),
-                materi: $('#inputEditMateri').val(),
-                folder: $('#inputEditFolder').val()
-            };
+            // MENGGUNAKAN FORM DATA AGAR TERBACA OLEH e.parameter DI APPS SCRIPT
+            let payload = new URLSearchParams();
+            payload.append("tanggal", $('#editTanggalHidden').val());
+            payload.append("waktu", $('#editWaktuHidden').val());
+            payload.append("kelas", $('#editKelasHidden').val());
+            payload.append("mapel", $('#editMapelHidden').val());
+            payload.append("materi", $('#inputEditMateri').val());
+            payload.append("folder", $('#inputEditFolder').val());
 
-            // Menggunakan mode no-cors agar bypass masalah keamanan block browser
             fetch(SCRIPT_URL, {
                 method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
+                mode: "no-cors", 
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: payload
             }).then(() => {
                 $('#modalFormEdit').modal('hide');
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
                 
-                // Muat ulang data 1.5 detik setelah sukses agar Google Sheet punya waktu update
-                setTimeout(() => {
-                    muatDataCSV();
-                }, 1500);
+                // Refresh data setelah 1.5 detik agar Sheets sempat memperbarui datanya
+                setTimeout(() => { muatDataCSV(); }, 1500);
             }).catch(err => {
                 alert("Gagal terhubung ke server.");
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
@@ -1209,7 +1201,7 @@
                 let encMateri = escapeURL(sesi.rawMateri);
                 let encFolder = escapeURL(sesi.rawFolder);
 
-                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>` : '';
+                let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                 tbody += `
                     <tr class="position-relative">
@@ -1396,7 +1388,7 @@
 
                         let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
-                        htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-2 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 position-relative ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                             ${btnEdit}
                             <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end mt-4 mt-sm-0" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
                             <div class="fw-bold text-dark my-1" style="font-size:0.95rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
@@ -1513,78 +1505,6 @@
             if (adaBentrokGlobal) $('#peringatanBentrokUtama').removeClass('d-none');
         }
         $('#pilihTanggal, #pilihBagianHarian').on('change', renderPantauanHarian);
-
-        // ==========================================
-        // FUNGSI BUKA MODAL RIWAYAT MATERI
-        // ==========================================
-        function bukaRiwayatMateri(encKelas, encMapel, encTgl, encWaktu) {
-            let kelas = decodeURIComponent(encKelas);
-            let mapel = decodeURIComponent(encMapel);
-            let tgl = decodeURIComponent(encTgl);
-            let waktu = decodeURIComponent(encWaktu);
-
-            let targetDateObj = parseDateFromCSV(tgl);
-            let targetWaktu = parseWaktuToMinutes(waktu);
-
-            let history = globalData.filter(r => {
-                if ((r['KELAS'] || '').trim() !== kelas) return false;
-                if ((r['MAPEL'] || '').trim() !== mapel) return false;
-                
-                let rDate = parseDateFromCSV(r['Hari Tanggal']);
-                if (!rDate) return false;
-                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
-                
-                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
-                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
-                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
-                }
-                return false;
-            });
-
-            history.sort((a, b) => {
-                let dateA = parseDateFromCSV(a['Hari Tanggal']);
-                let dateB = parseDateFromCSV(b['Hari Tanggal']);
-                let timeA = dateA ? dateA.getTime() : 0;
-                let timeB = dateB ? dateB.getTime() : 0;
-                if (timeA !== timeB) return timeB - timeA; 
-                let wA = parseWaktuToMinutes(a['WAKTU']);
-                let wB = parseWaktuToMinutes(b['WAKTU']);
-                let startA = wA ? wA.start : 0;
-                let startB = wB ? wB.start : 0;
-                return startB - startA;
-            });
-
-            let tbody = "";
-            if (history.length === 0) {
-                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
-            } else {
-                history.forEach((h) => {
-                    let hTanggal = h['Hari Tanggal'] || '-';
-                    let hWaktu = h['WAKTU'] || '-';
-                    let hMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '<em class="text-muted">Belum diisi</em>';
-                    let hFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
-                    if (hFolder && hFolder !== '-') {
-                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(hFolder)}</div>`;
-                    }
-                    
-                    let hPengajar = h['PENGAJAR'] || '-';
-
-                    tbody += `
-                    <tr>
-                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
-                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
-                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
-                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
-                    </tr>`;
-                });
-            }
-
-            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
-            $('#bodyRiwayatMateri').html(tbody);
-            
-            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
-            modal.show();
-        }
 
     </script>
 </body>
