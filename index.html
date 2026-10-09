@@ -293,7 +293,7 @@
                         </div>
                     </div>
                     <h5 class="fw-bold mb-2">Aktivasi Mode Edit</h5>
-                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk bisa mengedit data secara langsung (CRUD).</p>
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk mengaktifkan fitur pengeditan *Web App*.</p>
                     <input type="password" id="inputVerifyAdmin" class="form-control form-control-modern text-center mb-2" placeholder="Kode Admin">
                     <div id="errorVerifyAdmin" class="text-danger fw-bold d-none mb-3" style="font-size: 0.8rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode salah!</div>
                     <button class="btn btn-primary w-100 fw-bold rounded-3 mt-2" onclick="prosesVerifyAdmin()">Aktifkan Edit Web</button>
@@ -380,9 +380,10 @@
 
     <script>
         // ==========================================
-        // URL GOOGLE APPS SCRIPT (SUDAH DIUPDATE)
+        // URL GOOGLE APPS SCRIPT (WAJIB DIISI)
         // ==========================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
+        // Ganti baris di bawah ini dengan URL Web App dari Google Apps Script yang baru Anda buat
+        const SCRIPT_URL = "URL_DARI_LANGKAH_1_PASTE_DISINI"; 
 
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
@@ -425,6 +426,7 @@
                 $('body').addClass('admin-mode-active');
                 $('#btnAdminMode').html('<i class="fas fa-times me-1"></i>Tutup Mode Edit').removeClass('btn-light text-primary').addClass('btn-danger text-white');
                 
+                // Refresh semua tampilan agar tombol Edit muncul
                 renderPantauanHarian();
                 renderRekapanKelas();
                 renderRekapanPengajar();
@@ -465,7 +467,7 @@
         // Kirim Data Hasil Edit Ke Google Sheets API
         function simpanEditSesi() {
             if(SCRIPT_URL === "URL_DARI_LANGKAH_1_PASTE_DISINI" || SCRIPT_URL === "") {
-                alert("Anda belum memasukkan URL Google Apps Script.");
+                alert("Anda belum memasukkan URL Google Apps Script. Silakan lakukan Langkah 1 terlebih dahulu!");
                 return;
             }
 
@@ -481,6 +483,7 @@
                 folder: $('#inputEditFolder').val()
             };
 
+            // Menggunakan mode no-cors agar bypass masalah keamanan block browser
             fetch(SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -490,8 +493,10 @@
                 $('#modalFormEdit').modal('hide');
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
                 
-                // Refresh data untuk mendapatkan pembaruan dari Sheets
-                setTimeout(() => { muatDataCSV(); }, 1500);
+                // Muat ulang data 1.5 detik setelah sukses agar Google Sheet punya waktu update
+                setTimeout(() => {
+                    muatDataCSV();
+                }, 1500);
             }).catch(err => {
                 alert("Gagal terhubung ke server.");
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
@@ -1391,7 +1396,7 @@
 
                         let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
-                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 position-relative ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                        htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-2 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                             ${btnEdit}
                             <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end mt-4 mt-sm-0" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
                             <div class="fw-bold text-dark my-1" style="font-size:0.95rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
