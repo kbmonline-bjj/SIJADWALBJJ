@@ -293,7 +293,7 @@
                         </div>
                     </div>
                     <h5 class="fw-bold mb-2">Aktivasi Mode Edit</h5>
-                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk bisa mengedit data secara langsung (CRUD).</p>
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">Masukkan kode admin untuk mengaktifkan fitur pengeditan *Web App*.</p>
                     <input type="password" id="inputVerifyAdmin" class="form-control form-control-modern text-center mb-2" placeholder="Kode Admin">
                     <div id="errorVerifyAdmin" class="text-danger fw-bold d-none mb-3" style="font-size: 0.8rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode salah!</div>
                     <button class="btn btn-primary w-100 fw-bold rounded-3 mt-2" onclick="prosesVerifyAdmin()">Aktifkan Edit Web</button>
@@ -383,7 +383,7 @@
         // URL GOOGLE APPS SCRIPT (WAJIB DIISI)
         // ==========================================
         // Ganti baris di bawah ini dengan URL Web App dari Google Apps Script yang baru Anda buat
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
+        const SCRIPT_URL = "URL_DARI_LANGKAH_1_PASTE_DISINI"; 
 
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
         let globalData = [];
@@ -602,6 +602,7 @@
                 $('#filterPengajarPeriode').removeClass('d-flex').addClass('d-none');
                 $('#areaRekapanPengajar').removeClass('d-none');
                 $('#areaRekapanPeriode').addClass('d-none');
+                
                 if(!$('#pilihPengajar').val()) $('#pesanPilihPengajar').removeClass('d-none');
                 else renderRekapanPengajar();
             } else {
@@ -611,6 +612,7 @@
                 $('#areaRekapanPengajar').addClass('d-none');
                 $('#areaRekapanPeriode').removeClass('d-none');
                 $('#pesanPilihPengajar').addClass('d-none');
+                
                 renderRekapanPeriode();
             }
         }
@@ -719,6 +721,7 @@
             let dataKelasIni = globalData.filter(row => {
                 if(!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
+                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -727,6 +730,7 @@
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
+
                 return true;
             });
 
@@ -744,6 +748,7 @@
                     </div>
                 </div>
             `;
+            
             let htmlOutput = statsHtml; 
 
             if(modeRekapanKelas === 'mapel') {
@@ -920,9 +925,11 @@
 
             let dataPengajarIni = globalData.filter(row => {
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
+                
                 if(!row['PENGAJAR']) return false;
                 let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                 if(!namaPecah.includes(selectedPengajar)) return false;
+                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -931,6 +938,7 @@
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
+
                 return true;
             });
 
@@ -978,7 +986,9 @@
                         let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
 
                         let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                        if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                        if(rawFolder && rawFolder !== '-') {
+                            materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                        }
 
                         let encTgl = escapeURL(sesi['Hari Tanggal']);
                         let encWaktu = escapeURL(sesi['WAKTU']);
@@ -1045,7 +1055,9 @@
                     let rawFolder = sesi['FOLDER IPAD PEMBAHASAN'] ? sesi['FOLDER IPAD PEMBAHASAN'].trim() : '';
 
                     let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
-                    if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                    if(rawFolder && rawFolder !== '-') {
+                        materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                    }
 
                     let encTgl = escapeURL(sesi['Hari Tanggal']);
                     let encWaktu = escapeURL(sesi['WAKTU']);
@@ -1136,11 +1148,14 @@
                     let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                     namaPecah.forEach(nama => {
                         if(nama !== '' && nama.toLowerCase() !== 'cancel' && nama !== '-') {
+                            
                             let rawMateri = row['MATERI YANG DIBAHAS'] ? row['MATERI YANG DIBAHAS'].trim() : '';
                             let rawFolder = row['FOLDER IPAD PEMBAHASAN'] ? row['FOLDER IPAD PEMBAHASAN'].trim() : '';
 
                             let materiDetail = rawMateri ? rawMateri : '<span class="fst-italic text-muted">Belum diisi</span>';
-                            if(rawFolder && rawFolder !== '-') materiDetail += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                            if(rawFolder && rawFolder !== '-') {
+                                materiDetail += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                            }
 
                             detailedSessions.push({
                                 rawRow: row,
@@ -1197,7 +1212,7 @@
                 let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>` : '';
 
                 tbody += `
-                    <tr>
+                    <tr class="position-relative">
                         <td class="text-center text-muted"><div class="d-flex justify-content-center align-items-center">${btnEdit}${overallNo}</div></td>
                         <td>
                             <div class="fw-bold text-dark text-nowrap">${sesi.namaPengajar}</div>
@@ -1381,7 +1396,7 @@
 
                         let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
-                        htmlSesi += `<div class="jadwal-item d-flex flex-column h-100 position-relative ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
+                        htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-2 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                             ${btnEdit}
                             <div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center"><span class="text-primary fw-bold" style="font-size:0.85rem;"><i class="far fa-clock me-1"></i> ${sesi['WAKTU'] || '-'}</span>${statusHtml}</div><span class="badge-soft text-end mt-4 mt-sm-0" style="max-width:55%; white-space: normal; line-height: 1.2;">${sesi['KELAS'] || '-'}</span></div>
                             <div class="fw-bold text-dark my-1" style="font-size:0.95rem; line-height: 1.2;">${sesi['MAPEL'] || '-'}</div>
