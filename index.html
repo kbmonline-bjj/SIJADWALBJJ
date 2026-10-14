@@ -90,9 +90,7 @@
         
         .btn-settings:hover { background-color: #e2e8f0 !important; }
 
-        /* ========================================= */
         /* MASONRY GRID UNTUK MODE BERDASARKAN STUDIO */
-        /* ========================================= */
         .studio-grid {
             column-count: 1;
             column-gap: 1.5rem;
@@ -177,7 +175,6 @@
                     <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Studio digunakan bersamaan pada waktu yang beririsan)!
                 </div>
                 
-                <!-- CONTAINER UTAMA JADWAL HARIAN -->
                 <div id="areaTampilan" class="studio-grid"></div>
             </div>
 
@@ -334,7 +331,6 @@
                         <input type="email" id="inputEmailOperasional" class="form-control form-control-modern" placeholder="contoh: tim-standby@gmail.com">
                     </div>
                     
-                    <!-- MENU SYNC RENTANG TANGGAL MASSAL -->
                     <div class="mb-3 pt-3 border-top">
                         <label class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fas fa-sync-alt me-1 text-primary"></i> Sync Rentang Waktu ke Kalender:</label>
                         <div class="d-flex gap-2 align-items-center">
@@ -570,7 +566,6 @@
               });
         }
 
-
         // ==========================================
         // FUNGSI MODE EDIT (CRUD)
         // ==========================================
@@ -636,7 +631,6 @@
             modal.show();
         }
 
-        // Kirim Data Hasil Edit Ke Google Sheets
         function simpanEditSesi() {
             let btn = $('#btnSimpanEdit');
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
@@ -1335,7 +1329,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, // Menyimpan referensi row untuk tombol edit
+                                rawRow: row,
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
@@ -1494,7 +1488,7 @@
                             <i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br>
                             <em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em>
                         </div>
-                        <button class="btn btn-sm btn-primary ms-2 flex-shrink-0 fw-bold shadow-sm" style="font-size:0.65rem; padding: 0.2rem 0.5rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
+                        <button class="btn btn-sm btn-outline-primary ms-2 flex-shrink-0 fw-bold shadow-sm" style="font-size:0.65rem; padding: 0.2rem 0.5rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
                     </div>`;
         }
 
@@ -1700,6 +1694,80 @@
             if (adaBentrokGlobal) $('#peringatanBentrokUtama').removeClass('d-none');
         }
         $('#pilihTanggal, #pilihBagianHarian').on('change', renderPantauanHarian);
+
+        // ==========================================
+        // FUNGSI BUKA MODAL RIWAYAT MATERI
+        // ==========================================
+        function bukaRiwayatMateri(encKelas, encMapel, encTgl, encWaktu) {
+            let kelas = decodeURIComponent(encKelas);
+            let mapel = decodeURIComponent(encMapel);
+            let tgl = decodeURIComponent(encTgl);
+            let waktu = decodeURIComponent(encWaktu);
+
+            let targetDateObj = parseDateFromCSV(tgl);
+            let targetWaktu = parseWaktuToMinutes(waktu);
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== kelas) return false;
+                if ((r['MAPEL'] || '').trim() !== mapel) return false;
+                
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
+                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
+                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
+                }
+                return false;
+            });
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let tbody = "";
+            if (history.length === 0) {
+                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
+            } else {
+                history.forEach((h) => {
+                    let hTanggal = h['Hari Tanggal'] || '-';
+                    let hWaktu = h['WAKTU'] || '-';
+                    let rawMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '';
+                    let rawFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    
+                    let hMateri = rawMateri ? rawMateri : '<em class="text-muted">Belum diisi</em>';
+                    if (rawFolder && rawFolder !== '-') {
+                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                    }
+                    
+                    let hPengajar = h['PENGAJAR'] || '-';
+
+                    tbody += `
+                    <tr>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
+                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
+                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
+            $('#bodyRiwayatMateri').html(tbody);
+            
+            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
+            modal.show();
+        }
 
     </script>
 </body>
