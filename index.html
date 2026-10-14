@@ -89,6 +89,25 @@
         .admin-mode-active .btn-edit-sesi { display: inline-flex !important; }
         
         .btn-settings:hover { background-color: #e2e8f0 !important; }
+
+        /* MASONRY GRID UNTUK MODE KELAS */
+        .studio-grid {
+            column-count: 1;
+            column-gap: 1.5rem;
+            width: 100%;
+        }
+        @media (min-width: 768px) { .studio-grid { column-count: 2; } }
+        @media (min-width: 992px) { .studio-grid { column-count: 3; } }
+        @media (min-width: 1400px) { .studio-grid { column-count: 4; } }
+
+        .studio-item-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            width: 100%;
+            vertical-align: top;
+        }
     </style>
 </head>
 <body>
@@ -135,15 +154,15 @@
 
         <div class="tab-content" id="mainMenuContent">
             
-            <!-- TAB 1: PANTAUAN HARIAN & MINGGUAN KELAS -->
+            <!-- TAB 1: PANTAUAN HARIAN & KELAS -->
             <div class="tab-pane fade show active" id="harian" role="tabpanel">
                 <div class="header-section mt-0">
                     <div class="flex-grow-1 mb-3 mb-md-0">
                         <h2 class="fw-bold mb-2"><i class="far fa-calendar-check me-2"></i>Jadwal Pantauan</h2>
                         <div class="mode-toggle mt-2">
                             <button class="btn-mode active" id="btnModeStudio" onclick="ubahMode('studio')"><i class="fas fa-video me-2"></i>Berdasarkan Studio</button>
+                            <button class="btn-mode" id="btnModeKelas" onclick="ubahMode('kelas')"><i class="fas fa-users me-2"></i>Semua Jadwal Kelas</button>
                             <button class="btn-mode" id="btnModeJam" onclick="ubahMode('jam')"><i class="far fa-clock me-2"></i>Berdasarkan Jam</button>
-                            <button class="btn-mode" id="btnModeKelas" onclick="ubahMode('kelas')"><i class="fas fa-calendar-week me-2"></i>Mingguan Kelas</button>
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
@@ -155,9 +174,8 @@
                                 <option value="">-- Cari / Pilih Kelas --</option>
                             </select>
                         </div>
-                        <div class="position-relative">
+                        <div id="containerTanggalHarian" class="position-relative w-100">
                             <input type="date" id="pilihTanggal" class="form-control form-control-modern w-100 px-2" style="font-size: 0.95rem;">
-                            <small id="hintMingguan" class="d-none text-white opacity-75 position-absolute mt-1" style="font-size: 0.75rem;"><i class="fas fa-info-circle me-1"></i>Pilih salah satu hari dalam minggu tersebut</small>
                         </div>
                     </div>
                 </div>
@@ -166,7 +184,7 @@
                     <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Jadwal irisan terdeteksi)!
                 </div>
                 
-                <!-- CONTAINER JADWAL HARIAN (GRID SYSTEM KONVENSIONAL RAPI) -->
+                <!-- CONTAINER JADWAL -->
                 <div id="areaTampilan" class="row align-items-start"></div>
             </div>
 
@@ -323,7 +341,6 @@
                         <input type="email" id="inputEmailOperasional" class="form-control form-control-modern" placeholder="contoh: tim-standby@gmail.com">
                     </div>
                     
-                    <!-- MENU SYNC RENTANG TANGGAL MASSAL -->
                     <div class="mb-3 pt-3 border-top">
                         <label class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fas fa-sync-alt me-1 text-primary"></i> Sync Rentang Waktu ke Kalender:</label>
                         <div class="d-flex gap-2 align-items-center">
@@ -399,7 +416,7 @@
                 </div>
                 <div class="modal-footer bg-white border-top-0 pt-2">
                     <button type="button" class="btn btn-light border px-3 fw-bold" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btnSimpanEdit" onclick="simpanEditSesi()">
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btnSimpanEdit">
                         <i class="fas fa-save me-1"></i> Simpan ke Server
                     </button>
                 </div>
@@ -459,9 +476,15 @@
         let isAdminModeActive = false;
         const KODE_RAHASIA = "admin123"; 
 
-        function escapeURL(str) {
-            if(!str) return "";
-            return encodeURIComponent(str).replace(/'/g, "%27").replace(/"/g, "%22");
+        // Fungsi Escape HTML Murni (ANTI-CRASH 100%)
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // ==========================================
@@ -559,9 +582,8 @@
               });
         }
 
-
         // ==========================================
-        // FUNGSI MODE EDIT (CRUD)
+        // FUNGSI MODE EDIT (CRUD) VIA DATA ATTRIBUTES
         // ==========================================
         function toggleAdminMode() {
             if(isAdminModeActive) {
@@ -599,22 +621,22 @@
         }
         $(document).on('keypress', '#inputVerifyAdmin', function (e) { if (e.which == 13) { prosesVerifyAdmin(); } });
 
-        function bukaModalEditSesi(encTgl, encWaktu, encKelas, encMapel, encMateri, encFolder, encStudio, encPengajar) {
-            let tgl = decodeURIComponent(encTgl);
-            let waktu = decodeURIComponent(encWaktu);
-            let kelas = decodeURIComponent(encKelas);
-            let mapel = decodeURIComponent(encMapel);
-            let materi = decodeURIComponent(encMateri);
-            let folder = decodeURIComponent(encFolder);
-            let studio = decodeURIComponent(encStudio);
-            let pengajar = decodeURIComponent(encPengajar);
+        // Event Trigger Buka Modal Edit (Anti-Crash)
+        $(document).on('click', '.btn-edit-sesi', function() {
+            let btn = $(this);
+            $('#editTanggalHidden').val(btn.attr('data-tgl'));
+            $('#editWaktuHidden').val(btn.attr('data-waktu'));
+            $('#editKelasHidden').val(btn.attr('data-kelas'));
+            $('#editMapelHidden').val(btn.attr('data-mapel'));
+            $('#editStudioHidden').val(btn.attr('data-studio'));
+            $('#editPengajarHidden').val(btn.attr('data-pengajar'));
 
-            $('#editTanggalHidden').val(tgl);
-            $('#editWaktuHidden').val(waktu);
-            $('#editKelasHidden').val(kelas);
-            $('#editMapelHidden').val(mapel);
-            $('#editStudioHidden').val(studio);
-            $('#editPengajarHidden').val(pengajar);
+            let tgl = btn.attr('data-tgl') || '-';
+            let waktu = btn.attr('data-waktu') || '-';
+            let mapel = btn.attr('data-mapel') || '-';
+            let kelas = btn.attr('data-kelas') || '-';
+            let materi = btn.attr('data-materi') || '';
+            let folder = btn.attr('data-folder') || '';
 
             $('#infoEditSesi').html(`${tgl} | <i class="far fa-clock"></i> ${waktu} <br> <b class="text-primary">${mapel}</b> <span class="badge bg-secondary ms-1">${kelas}</span>`);
             
@@ -623,10 +645,11 @@
 
             let modal = new bootstrap.Modal(document.getElementById('modalFormEdit'));
             modal.show();
-        }
+        });
 
-        function simpanEditSesi() {
-            let btn = $('#btnSimpanEdit');
+        // Trigger Simpan Data Edit
+        $(document).on('click', '#btnSimpanEdit', function() {
+            let btn = $(this);
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
 
             let rowDateStr = $('#editTanggalHidden').val();
@@ -671,7 +694,7 @@
                 alert("Gagal terhubung ke server Google Sheets: " + err.message);
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
             });
-        }
+        });
 
         // ==========================================
         // SISTEM KODE AKSES RAHASIA
@@ -746,36 +769,21 @@
             return null;
         }
 
-        function getWeekRange(dateStr) {
-            let parts = dateStr.split('-');
-            let d = new Date(parts[0], parts[1] - 1, parts[2]);
-            let day = d.getDay(); 
-            let diffToMonday = d.getDate() - day + (day === 0 ? -6 : 1);
-            let monday = new Date(d.getFullYear(), d.getMonth(), diffToMonday);
-            monday.setHours(0,0,0,0);
-            
-            let sunday = new Date(monday.getTime());
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23,59,59,999);
-            
-            return { start: monday, end: sunday };
-        }
-
         function ubahMode(mode) {
             modeTampilan = mode;
             $('#btnModeStudio, #btnModeJam, #btnModeKelas').removeClass('active');
             if(mode === 'studio') {
                 $('#btnModeStudio').addClass('active');
                 $('#containerKelasHarian').addClass('d-none');
-                $('#hintMingguan').addClass('d-none');
+                $('#containerTanggalHarian').removeClass('d-none');
             } else if(mode === 'jam') {
                 $('#btnModeJam').addClass('active');
                 $('#containerKelasHarian').addClass('d-none');
-                $('#hintMingguan').addClass('d-none');
+                $('#containerTanggalHarian').removeClass('d-none');
             } else {
                 $('#btnModeKelas').addClass('active');
                 $('#containerKelasHarian').removeClass('d-none');
-                $('#hintMingguan').removeClass('d-none');
+                $('#containerTanggalHarian').addClass('d-none'); // Sembunyikan tanggal karena mode kelas memunculkan SEMUA TANGGAL
             }
             renderPantauanHarian(); 
         }
@@ -822,9 +830,9 @@
         function updateKelasHarianDropdown(bagian) {
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
-            let opsiKelas = '<option value="">-- Pilih Kelas Mingguan --</option>';
+            let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
             kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
-            $('#pilihKelasHarian').html(opsiKelas).select2({ placeholder: "-- Pilih Kelas Mingguan --", allowClear: true });
+            $('#pilihKelasHarian').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
         }
 
         function updateKelasDropdown(bagian) {
@@ -981,16 +989,16 @@
                         let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
                         if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
 
-                        let encTgl = escapeURL(sesi['Hari Tanggal']);
-                        let encWaktu = escapeURL(sesi['WAKTU']);
-                        let encKelas = escapeURL(sesi['KELAS']);
-                        let encMapel = escapeURL(sesi['MAPEL']);
-                        let encMateri = escapeURL(rawMateri);
-                        let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" 
+                            data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                            data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                            data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                            data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                            data-materi="${escapeHTML(rawMateri)}" 
+                            data-folder="${escapeHTML(rawFolder)}" 
+                            data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                            data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                            <i class="fas fa-pencil-alt"></i></button>` : '';
 
                         tbodyHtml += `<tr class="${rowClass} position-relative">
                             <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
@@ -1051,16 +1059,16 @@
                     let materiHtml = rawMateri ? rawMateri : '<span class="fw-normal fst-italic text-muted">Belum diisi</span>';
                     if(rawFolder && rawFolder !== '-') materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
 
-                    let encTgl = escapeURL(sesi['Hari Tanggal']);
-                    let encWaktu = escapeURL(sesi['WAKTU']);
-                    let encKelas = escapeURL(sesi['KELAS']);
-                    let encMapel = escapeURL(sesi['MAPEL']);
-                    let encMateri = escapeURL(rawMateri);
-                    let encFolder = escapeURL(rawFolder);
-                    let encStudio = escapeURL(sesi['STUDIO'] || '');
-                    let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                    let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" 
+                        data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                        data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                        data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                        data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                        data-materi="${escapeHTML(rawMateri)}" 
+                        data-folder="${escapeHTML(rawFolder)}" 
+                        data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                        data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                        <i class="fas fa-pencil-alt"></i></button>` : '';
 
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
@@ -1192,16 +1200,16 @@
                             materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
                         }
 
-                        let encTgl = escapeURL(sesi['Hari Tanggal']);
-                        let encWaktu = escapeURL(sesi['WAKTU']);
-                        let encKelas = escapeURL(sesi['KELAS']);
-                        let encMapel = escapeURL(sesi['MAPEL']);
-                        let encMateri = escapeURL(rawMateri);
-                        let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" 
+                            data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                            data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                            data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                            data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                            data-materi="${escapeHTML(rawMateri)}" 
+                            data-folder="${escapeHTML(rawFolder)}" 
+                            data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                            data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                            <i class="fas fa-pencil-alt"></i></button>` : '';
 
                         tbodyHtml += `<tr class="${rowClass} position-relative">
                             <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
@@ -1263,16 +1271,16 @@
                         materiHtml += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
                     }
 
-                    let encTgl = escapeURL(sesi['Hari Tanggal']);
-                    let encWaktu = escapeURL(sesi['WAKTU']);
-                    let encKelas = escapeURL(sesi['KELAS']);
-                    let encMapel = escapeURL(sesi['MAPEL']);
-                    let encMateri = escapeURL(rawMateri);
-                    let encFolder = escapeURL(rawFolder);
-                    let encStudio = escapeURL(sesi['STUDIO'] || '');
-                    let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                    let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" 
+                        data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                        data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                        data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                        data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                        data-materi="${escapeHTML(rawMateri)}" 
+                        data-folder="${escapeHTML(rawFolder)}" 
+                        data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                        data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                        <i class="fas fa-pencil-alt"></i></button>` : '';
 
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
@@ -1408,16 +1416,16 @@
                     sesiKe++;
                 }
 
-                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal'] || '');
-                let encWaktu = escapeURL(sesi.rawRow['WAKTU'] || '');
-                let encKelas = escapeURL(sesi.rawRow['KELAS'] || '');
-                let encMapel = escapeURL(sesi.rawRow['MAPEL'] || '');
-                let encMateri = escapeURL(sesi.rawMateri);
-                let encFolder = escapeURL(sesi.rawFolder);
-                let encStudio = escapeURL(sesi.rawRow['STUDIO'] || '');
-                let encPengajar = escapeURL(sesi.rawRow['PENGAJAR'] || '');
-
-                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}', '${encStudio}', '${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>` : '';
+                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" 
+                    data-tgl="${escapeHTML(sesi.rawRow['Hari Tanggal'])}" 
+                    data-waktu="${escapeHTML(sesi.rawRow['WAKTU'])}" 
+                    data-kelas="${escapeHTML(sesi.rawRow['KELAS'])}" 
+                    data-mapel="${escapeHTML(sesi.rawRow['MAPEL'])}" 
+                    data-materi="${escapeHTML(sesi.rawMateri)}" 
+                    data-folder="${escapeHTML(sesi.rawFolder)}" 
+                    data-studio="${escapeHTML(sesi.rawRow['STUDIO'])}" 
+                    data-pengajar="${escapeHTML(sesi.rawRow['PENGAJAR'])}">
+                    <i class="fas fa-pencil-alt"></i></button>` : '';
 
                 tbody += `
                     <tr class="position-relative">
@@ -1468,7 +1476,7 @@
         $('#pilihCabangPeriode, #startDatePeriode, #endDatePeriode').on('change', renderRekapanPeriode);
 
         // ==========================================
-        // FUNGSI BANTUAN MATERI SEBELUMNYA
+        // FUNGSI BANTUAN MATERI SEBELUMNYA VIA DATA ATTRIBUTES
         // ==========================================
         function buildPrevMateriHtml(sesi) {
             let currentKelas = sesi['KELAS'] ? sesi['KELAS'].trim() : '';
@@ -1513,29 +1521,101 @@
             
             if (!lPrevMateri || lPrevMateri === '-') return "";
 
-            let encodedKelas = escapeURL(currentKelas);
-            let encodedMapel = escapeURL(currentMapel);
-            let encodedTgl = escapeURL(sesi['Hari Tanggal']);
-            let encodedWaktu = escapeURL(sesi['WAKTU']);
+            let safeKelas = escapeHTML(currentKelas);
+            let safeMapel = escapeHTML(currentMapel);
+            let safeTgl = escapeHTML(sesi['Hari Tanggal']);
+            let safeWaktu = escapeHTML(sesi['WAKTU']);
 
             return `<div class="mt-3 d-flex justify-content-between align-items-start">
                         <div>
                             <i class="fas fa-history text-secondary me-1"></i> <strong>Sblmnya:</strong> ${lPrevMateri} <br>
                             <em style="font-size:0.7rem; color:#94a3b8; margin-left: 17px;">(${lPrevTanggal})</em>
                         </div>
-                        <button class="btn btn-sm btn-primary ms-2 flex-shrink-0 fw-bold shadow-sm" style="font-size:0.65rem; padding: 0.2rem 0.5rem; border-radius: 6px;" onclick="bukaRiwayatMateri('${encodedKelas}', '${encodedMapel}', '${encodedTgl}', '${encodedWaktu}')">Lihat Semua</button>
+                        <button class="btn btn-sm btn-primary ms-2 flex-shrink-0 fw-bold shadow-sm btn-riwayat" 
+                            data-kelas="${safeKelas}" data-mapel="${safeMapel}" data-tgl="${safeTgl}" data-waktu="${safeWaktu}">
+                            Lihat Semua
+                        </button>
                     </div>`;
         }
 
+        // Event Listener untuk Tombol Riwayat Materi (Anti-Crash)
+        $(document).on('click', '.btn-riwayat', function() {
+            let kelas = $(this).attr('data-kelas');
+            let mapel = $(this).attr('data-mapel');
+            let tgl = $(this).attr('data-tgl');
+            let waktu = $(this).attr('data-waktu');
+
+            let targetDateObj = parseDateFromCSV(tgl);
+            let targetWaktu = parseWaktuToMinutes(waktu);
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== String(kelas)) return false;
+                if ((r['MAPEL'] || '').trim() !== String(mapel)) return false;
+                
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
+                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
+                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
+                }
+                return false;
+            });
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let tbody = "";
+            if (history.length === 0) {
+                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
+            } else {
+                history.forEach((h) => {
+                    let hTanggal = h['Hari Tanggal'] || '-';
+                    let hWaktu = h['WAKTU'] || '-';
+                    let rawMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '';
+                    let rawFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    
+                    let hMateri = rawMateri ? rawMateri : '<em class="text-muted">Belum diisi</em>';
+                    if (rawFolder && rawFolder !== '-') {
+                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(rawFolder)}</div>`;
+                    }
+                    
+                    let hPengajar = h['PENGAJAR'] || '-';
+
+                    tbody += `
+                    <tr>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
+                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
+                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
+            $('#bodyRiwayatMateri').html(tbody);
+            
+            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
+            modal.show();
+        });
+
         // ==========================================
-        // PANTAUAN HARIAN
+        // PANTAUAN HARIAN & SEMUA JADWAL KELAS
         // ==========================================
         function renderPantauanHarian() {
             let selectedDateVal = $('#pilihTanggal').val(); 
             let selectedBagian = $('#pilihBagianHarian').val();
-            if(!selectedDateVal) return;
-            
-            let tglPencarianCSV = formatKeCSV(selectedDateVal);
             
             $('#areaTampilan').empty(); $('#peringatanBentrokUtama').addClass('d-none');
 
@@ -1552,33 +1632,25 @@
                 
                 let selectedKelas = $('#pilihKelasHarian').val();
                 if (!selectedKelas) {
-                    $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-hand-pointer fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Pilih Kelas</h5><p>Silakan pilih kelas pada dropdown di atas untuk melihat jadwal mingguannya.</p></div>');
+                    $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-hand-pointer fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Pilih Kelas</h5><p>Silakan pilih kelas pada dropdown di atas untuk melihat seluruh riwayat jadwalnya.</p></div>');
                     return;
                 }
                 
-                let weekRange = getWeekRange(selectedDateVal);
-                
-                let dataHariIni = globalData.filter(row => {
+                let dataKelasIni = globalData.filter(row => {
                     if (selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
                     if (!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
-                    
-                    let rDate = parseDateFromCSV(row['Hari Tanggal']);
-                    if (!rDate) return false;
-                    return rDate >= weekRange.start && rDate <= weekRange.end;
+                    return true;
                 });
                 
-                if (dataHariIni.length === 0) {
-                    $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5><p>Belum ada jadwal untuk kelas ini pada minggu tersebut.</p></div>');
+                if (dataKelasIni.length === 0) {
+                    $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5><p>Belum ada jadwal untuk kelas ini.</p></div>');
                     return;
                 }
-                
-                let tglMulai = formatKeCSV(`${weekRange.start.getFullYear()}-${String(weekRange.start.getMonth()+1).padStart(2,'0')}-${String(weekRange.start.getDate()).padStart(2,'0')}`);
-                let tglSelesai = formatKeCSV(`${weekRange.end.getFullYear()}-${String(weekRange.end.getMonth()+1).padStart(2,'0')}-${String(weekRange.end.getDate()).padStart(2,'0')}`);
-                
-                htmlOutput += `<div class="col-12 mb-4"><div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 text-primary text-center fw-bold shadow-sm rounded-4 py-3"><i class="fas fa-calendar-week me-2"></i>Jadwal Mingguan Kelas <span class="badge bg-primary fs-6 ms-1">${selectedKelas}</span> <br><span class="fw-normal text-muted" style="font-size:0.85rem;">${tglMulai} &nbsp;-&nbsp; ${tglSelesai}</span></div></div>`;
+
+                htmlOutput += `<div class="col-12 mb-4"><div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 text-primary text-center fw-bold shadow-sm rounded-4 py-3"><i class="fas fa-calendar-week me-2"></i>Rekapan Semua Jadwal <span class="badge bg-primary fs-6 ms-1">${selectedKelas}</span></div></div>`;
 
                 let jadwalPerHari = {};
-                dataHariIni.forEach(row => {
+                dataKelasIni.forEach(row => {
                     let tgl = row['Hari Tanggal'] ? row['Hari Tanggal'].trim() : 'Tanpa Tanggal';
                     if(!jadwalPerHari[tgl]) jadwalPerHari[tgl] = [];
                     jadwalPerHari[tgl].push(row);
@@ -1604,7 +1676,7 @@
                         let sessionDateStr = sessionDateObj ? `${sessionDateObj.getFullYear()}-${String(sessionDateObj.getMonth()+1).padStart(2,'0')}-${String(sessionDateObj.getDate()).padStart(2,'0')}` : '';
                         
                         let statusHtml = ""; let itemClass = "";
-                        if (sessionDateStr < todayRealStr2) { 
+                        if (sessionDateStr && sessionDateStr < todayRealStr2) { 
                             statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai"; 
                         } else if (sessionDateStr === todayRealStr2 && waktuParsed) {
                             if (currentMinutesReal > waktuParsed.end) { statusHtml = '<span class="badge-selesai ms-2"><i class="fas fa-check-double me-1"></i>Selesai</span>'; itemClass = "item-selesai"; }
@@ -1624,17 +1696,18 @@
                             tambahanHtml += `</div>`;
                         }
 
-                        let encTgl = escapeURL(sesi['Hari Tanggal']);
-                        let encWaktu = escapeURL(sesi['WAKTU']);
-                        let encKelas = escapeURL(sesi['KELAS']);
-                        let encMapel = escapeURL(sesi['MAPEL']);
-                        let encMateri = escapeURL(rawMateri);
-                        let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
                         let studioBadge = sesi['STUDIO'] ? sesi['STUDIO'].trim() : '-';
 
-                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}', '${encStudio}', '${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" 
+                            data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                            data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                            data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                            data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                            data-materi="${escapeHTML(rawMateri)}" 
+                            data-folder="${escapeHTML(rawFolder)}" 
+                            data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                            data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                            <i class="fas fa-pencil-alt"></i></button>` : '';
 
                         htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-3 ${itemClass}">
                             ${btnEdit}
@@ -1662,11 +1735,14 @@
             } else if (modeTampilan === 'studio') {
                 $('#areaTampilan').attr('class', 'row align-items-start');
                 
+                if(!selectedDateVal) return;
+                let tglPencarianCSV = formatKeCSV(selectedDateVal);
                 let dataHariIni = globalData.filter(row => {
                     if (row['Hari Tanggal'] !== tglPencarianCSV) return false;
                     if (selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
                     return true;
                 });
+                
                 if (dataHariIni.length === 0) {
                     $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5><p>Belum ada kelas yang terdaftar pada filter ini.</p></div>');
                     return;
@@ -1711,16 +1787,16 @@
                             tambahanHtml += `</div>`;
                         }
 
-                        let encTgl = escapeURL(sesi['Hari Tanggal']);
-                        let encWaktu = escapeURL(sesi['WAKTU']);
-                        let encKelas = escapeURL(sesi['KELAS']);
-                        let encMapel = escapeURL(sesi['MAPEL']);
-                        let encMateri = escapeURL(rawMateri);
-                        let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}', '${encStudio}', '${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" 
+                            data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                            data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                            data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                            data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                            data-materi="${escapeHTML(rawMateri)}" 
+                            data-folder="${escapeHTML(rawFolder)}" 
+                            data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                            data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                            <i class="fas fa-pencil-alt"></i></button>` : '';
 
                         htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-3 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                             ${btnEdit}
@@ -1741,6 +1817,8 @@
             } else {
                 $('#areaTampilan').attr('class', 'row align-items-start');
                 
+                if(!selectedDateVal) return;
+                let tglPencarianCSV = formatKeCSV(selectedDateVal);
                 let dataHariIni = globalData.filter(row => {
                     if (row['Hari Tanggal'] !== tglPencarianCSV) return false;
                     if (selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
@@ -1750,7 +1828,7 @@
                     $('#areaTampilan').html('<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fs-2 mb-3 opacity-50"></i><h5 class="fw-bold text-muted">Tidak Ada Jadwal</h5><p>Belum ada kelas yang terdaftar pada filter ini.</p></div>');
                     return;
                 }
-
+                
                 let jadwalPerJam = {};
                 dataHariIni.forEach(row => {
                     let jam = row['WAKTU'] ? row['WAKTU'].trim() : 'Tanpa Jam';
@@ -1798,16 +1876,16 @@
                             tambahanHtml += `</div>`;
                         }
 
-                        let encTgl = escapeURL(sesi['Hari Tanggal']);
-                        let encWaktu = escapeURL(sesi['WAKTU']);
-                        let encKelas = escapeURL(sesi['KELAS']);
-                        let encMapel = escapeURL(sesi['MAPEL']);
-                        let encMateri = escapeURL(rawMateri);
-                        let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
-
-                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" 
+                            data-tgl="${escapeHTML(sesi['Hari Tanggal'])}" 
+                            data-waktu="${escapeHTML(sesi['WAKTU'])}" 
+                            data-kelas="${escapeHTML(sesi['KELAS'])}" 
+                            data-mapel="${escapeHTML(sesi['MAPEL'])}" 
+                            data-materi="${escapeHTML(rawMateri)}" 
+                            data-folder="${escapeHTML(rawFolder)}" 
+                            data-studio="${escapeHTML(sesi['STUDIO'])}" 
+                            data-pengajar="${escapeHTML(sesi['PENGAJAR'])}">
+                            <i class="fas fa-pencil-alt"></i></button>` : '';
 
                         htmlSesi += `
                         <div class="col-md-6 col-lg-4 col-xl-3 mb-3 d-flex">
