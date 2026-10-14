@@ -87,8 +87,6 @@
         /* CLASS UNTUK MODE EDIT (CRUD) */
         .btn-edit-sesi { display: none; z-index: 10; padding: 0.15rem 0.5rem; font-size: 0.75rem; border-radius: 6px; }
         .admin-mode-active .btn-edit-sesi { display: inline-flex !important; }
-        
-        .btn-settings:hover { background-color: #e2e8f0 !important; }
     </style>
 </head>
 <body>
@@ -98,18 +96,10 @@
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <i class="fas fa-layer-group text-primary me-2 fs-3"></i> Pantauan Operasional
             </a>
-            
-            <div class="ms-auto d-flex gap-2">
-                <!-- Tombol Pengaturan Integrasi Kalender -->
-                <button class="btn btn-sm btn-light border fw-bold text-secondary shadow-sm btn-settings" onclick="bukaPengaturan()" title="Pengaturan Integrasi Email">
-                    <i class="fas fa-cog"></i>
-                </button>
-                
-                <!-- Tombol Toggle Mode Edit Admin -->
-                <button id="btnAdminMode" class="btn btn-sm btn-light border fw-bold text-primary shadow-sm" onclick="toggleAdminMode()">
-                    <i class="fas fa-edit me-1"></i>Mode Edit Web
-                </button>
-            </div>
+            <!-- Tombol Toggle Mode Edit Admin -->
+            <button id="btnAdminMode" class="btn btn-sm btn-light border fw-bold text-primary shadow-sm ms-auto" onclick="toggleAdminMode()">
+                <i class="fas fa-edit me-1"></i>Mode Edit Web
+            </button>
         </div>
     </nav>
 
@@ -292,48 +282,6 @@
         </div>
     </div>
 
-    <!-- MODAL PENGATURAN INTEGRASI KALENDER -->
-    <div class="modal fade" id="modalPengaturan" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header bg-light border-bottom-0 pb-2">
-                    <h5 class="modal-title fw-bold text-secondary"><i class="fas fa-cog me-2"></i>Pengaturan Integrasi</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="alert alert-warning py-2 px-3 mb-4 d-flex" style="font-size: 0.85rem;">
-                        <i class="fas fa-info-circle mt-1 me-2 fs-5"></i>
-                        <div>Email ini akan ditambahkan sebagai tamu (Guest) di <b>Google Calendar</b> agar tim operasional mendapat alarm notifikasi jadwal.</div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Alamat Email Tim Operasional:</label>
-                        <input type="email" id="inputEmailOperasional" class="form-control form-control-modern" placeholder="contoh: tim-standby@gmail.com">
-                    </div>
-                    
-                    <!-- MENU SYNC RENTANG TANGGAL MASSAL -->
-                    <div class="mb-3 pt-3 border-top">
-                        <label class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fas fa-sync-alt me-1 text-primary"></i> Sync Rentang Waktu ke Kalender:</label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <input type="date" id="syncStartDate" class="form-control form-control-modern form-control-sm px-2">
-                            <span class="fw-bold text-muted">-</span>
-                            <input type="date" id="syncEndDate" class="form-control form-control-modern form-control-sm px-2">
-                        </div>
-                        <button type="button" class="btn btn-outline-success fw-bold w-100 mt-3 py-2" id="btnSyncRentang" onclick="syncKalenderRentang()">
-                            <i class="fas fa-calendar-plus me-1"></i> Mulai Sync Jadwal
-                        </button>
-                        <small class="text-muted d-block mt-2 text-center" style="font-size:0.75rem;">*Jadwal yang sudah ada akan di-update otomatis (Tidak Ganda).</small>
-                    </div>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-primary px-4 fw-bold w-100" id="btnSimpanPengaturan" onclick="simpanPengaturan()">
-                        <i class="fas fa-save me-1"></i> Simpan Email Saja
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL POPUP VERIFIKASI ADMIN UNTUK EDIT DATA -->
     <div class="modal fade" id="modalVerifyAdmin" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -368,12 +316,11 @@
                         <span id="infoEditSesi"></span>
                     </div>
                     
+                    <!-- ID Tersembunyi untuk proses API -->
                     <input type="hidden" id="editTanggalHidden">
                     <input type="hidden" id="editWaktuHidden">
                     <input type="hidden" id="editKelasHidden">
                     <input type="hidden" id="editMapelHidden">
-                    <input type="hidden" id="editStudioHidden">
-                    <input type="hidden" id="editPengajarHidden">
 
                     <div class="mb-3">
                         <label class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Materi yang Dibahas:</label>
@@ -447,109 +394,11 @@
         let isAdminModeActive = false;
         const KODE_RAHASIA = "admin123"; 
 
+        // Fungsi Escape URL Data agar aman diklik
         function escapeURL(str) {
             if(!str) return "";
             return encodeURIComponent(str).replace(/'/g, "%27").replace(/"/g, "%22");
         }
-
-        // ==========================================
-        // FUNGSI PENGATURAN INTEGRASI KALENDER
-        // ==========================================
-        function bukaPengaturan() {
-            let savedEmail = localStorage.getItem('op_email_notif') || "";
-            $('#inputEmailOperasional').val(savedEmail);
-            
-            // Set default tanggal hari ini
-            const tzOffset = (new Date()).getTimezoneOffset() * 60000;
-            const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
-            $('#syncStartDate').val(todayFormatted);
-            $('#syncEndDate').val(todayFormatted);
-            
-            let modal = new bootstrap.Modal(document.getElementById('modalPengaturan'));
-            modal.show();
-        }
-
-        function simpanPengaturan() {
-            let email = $('#inputEmailOperasional').val();
-            let btn = $('#btnSimpanPengaturan');
-            
-            localStorage.setItem('op_email_notif', email);
-            btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
-            
-            let payload = { action: "save_email", email: email };
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                // Removed mode: "no-cors"
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ payload: JSON.stringify(payload) })
-            }).then(res => res.json())
-              .then(data => {
-                $('#modalPengaturan').modal('hide');
-                alert(data.message);
-            }).catch(err => {
-                alert("Gagal menyimpan ke server: " + err.message);
-                $('#modalPengaturan').modal('hide');
-            }).finally(() => {
-                btn.html('<i class="fas fa-save me-1"></i> Simpan Email Saja').prop('disabled', false);
-            });
-        }
-
-        function syncKalenderRentang() {
-            let sDate = $('#syncStartDate').val();
-            let eDate = $('#syncEndDate').val();
-            
-            if (!sDate || !eDate) { alert("Pilih tanggal awal dan akhir terlebih dahulu."); return; }
-            
-            let startObj = new Date(sDate); startObj.setHours(0,0,0,0);
-            let endObj = new Date(eDate); endObj.setHours(23,59,59,999);
-            
-            let dataRentang = globalData.filter(row => {
-                let rDate = parseDateFromCSV(row['Hari Tanggal']);
-                if(!rDate) return false;
-                return rDate >= startObj && rDate <= endObj;
-            });
-            
-            if (dataRentang.length === 0) { alert("Tidak ada jadwal pada rentang tanggal tersebut."); return; }
-
-            let btn = $('#btnSyncRentang');
-            btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyinkronisasi...').prop('disabled', true);
-
-            let jadwalList = dataRentang.map(j => {
-                let rDate = parseDateFromCSV(j['Hari Tanggal']);
-                let y = rDate.getFullYear();
-                let m = String(rDate.getMonth() + 1).padStart(2, '0');
-                let d = String(rDate.getDate()).padStart(2, '0');
-                return {
-                    iso_date: `${y}-${m}-${d}`,
-                    waktu: j['WAKTU'], mapel: j['MAPEL'], kelas: j['KELAS'], 
-                    studio: j['STUDIO'], pengajar: j['PENGAJAR'], 
-                    materi: j['MATERI YANG DIBAHAS'] ? j['MATERI YANG DIBAHAS'].trim() : '', 
-                    folder: j['FOLDER IPAD PEMBAHASAN'] ? j['FOLDER IPAD PEMBAHASAN'].trim() : ''
-                };
-            });
-
-            let payload = { action: "sync_bulk", jadwal_list: jadwalList };
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                // Removed mode: "no-cors"
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ payload: JSON.stringify(payload) })
-            }).then(res => res.json())
-              .then(data => {
-                  if (data.status === 'success') {
-                      alert(data.message);
-                  } else {
-                      alert("Error: " + data.message);
-                  }
-              }).catch(err => {
-                  alert("Gagal terhubung ke Google Calendar: " + err.message);
-              }).finally(() => {
-                  btn.html('<i class="fas fa-calendar-plus me-1"></i> Mulai Sync Jadwal').prop('disabled', false);
-              });
-        }
-
 
         // ==========================================
         // FUNGSI MODE EDIT (CRUD)
@@ -590,22 +439,19 @@
         }
         $(document).on('keypress', '#inputVerifyAdmin', function (e) { if (e.which == 13) { prosesVerifyAdmin(); } });
 
-        function bukaModalEditSesi(encTgl, encWaktu, encKelas, encMapel, encMateri, encFolder, encStudio, encPengajar) {
+        // Buka Popup Edit Form
+        function bukaModalEditSesi(encTgl, encWaktu, encKelas, encMapel, encMateri, encFolder) {
             let tgl = decodeURIComponent(encTgl);
             let waktu = decodeURIComponent(encWaktu);
             let kelas = decodeURIComponent(encKelas);
             let mapel = decodeURIComponent(encMapel);
             let materi = decodeURIComponent(encMateri);
             let folder = decodeURIComponent(encFolder);
-            let studio = decodeURIComponent(encStudio);
-            let pengajar = decodeURIComponent(encPengajar);
 
             $('#editTanggalHidden').val(tgl);
             $('#editWaktuHidden').val(waktu);
             $('#editKelasHidden').val(kelas);
             $('#editMapelHidden').val(mapel);
-            $('#editStudioHidden').val(studio);
-            $('#editPengajarHidden').val(pengajar);
 
             $('#infoEditSesi').html(`${tgl} | <i class="far fa-clock"></i> ${waktu} <br> <b class="text-primary">${mapel}</b> <span class="badge bg-secondary ms-1">${kelas}</span>`);
             
@@ -616,52 +462,30 @@
             modal.show();
         }
 
-        // Kirim Data Hasil Edit Ke Google Sheets
+        // Kirim Data Hasil Edit Ke Google Sheets API
         function simpanEditSesi() {
             let btn = $('#btnSimpanEdit');
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
 
-            let rowDateStr = $('#editTanggalHidden').val();
-            let parsedD = parseDateFromCSV(rowDateStr);
-            let isoDateStr = "";
-            if(parsedD) {
-                let y = parsedD.getFullYear();
-                let m = String(parsedD.getMonth() + 1).padStart(2, '0');
-                let d = String(parsedD.getDate()).padStart(2, '0');
-                isoDateStr = `${y}-${m}-${d}`;
-            }
-
-            let payload = {
-                action: "edit_sesi",
-                iso_date: isoDateStr,
-                email_notif: localStorage.getItem('op_email_notif') || "",
-                tanggal: rowDateStr,
-                waktu: $('#editWaktuHidden').val(),
-                kelas: $('#editKelasHidden').val(),
-                mapel: $('#editMapelHidden').val(),
-                studio: $('#editStudioHidden').val(),
-                pengajar: $('#editPengajarHidden').val(),
-                materi: $('#inputEditMateri').val(),
-                folder: $('#inputEditFolder').val()
-            };
+            let payload = new URLSearchParams();
+            payload.append("tanggal", $('#editTanggalHidden').val());
+            payload.append("waktu", $('#editWaktuHidden').val());
+            payload.append("kelas", $('#editKelasHidden').val());
+            payload.append("mapel", $('#editMapelHidden').val());
+            payload.append("materi", $('#inputEditMateri').val());
+            payload.append("folder", $('#inputEditFolder').val());
 
             fetch(SCRIPT_URL, {
                 method: "POST",
-                // Removed mode: "no-cors"
+                mode: "no-cors", 
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ payload: JSON.stringify(payload) })
-            }).then(res => res.json())
-              .then(data => {
+                body: payload
+            }).then(() => {
                 $('#modalFormEdit').modal('hide');
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
-                
-                if (data.status === "success") {
-                    setTimeout(() => { muatDataCSV(); }, 1500);
-                } else {
-                    alert("Error: " + data.message);
-                }
+                setTimeout(() => { muatDataCSV(); }, 1500);
             }).catch(err => {
-                alert("Gagal terhubung ke server Google Sheets: " + err.message);
+                alert("Gagal terhubung ke server.");
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
             });
         }
@@ -682,7 +506,10 @@
             } else {
                 errorMsg.removeClass('d-none');
                 container.find('.input-kode').css('border-color', '#ef4444');
-                setTimeout(() => { errorMsg.addClass('d-none'); container.find('.input-kode').css('border-color', ''); }, 3000);
+                setTimeout(() => {
+                    errorMsg.addClass('d-none');
+                    container.find('.input-kode').css('border-color', '');
+                }, 3000);
             }
         }
         $(document).on('keypress', '.input-kode', function (e) { if (e.which == 13) { bukaAkses(this); } });
@@ -881,13 +708,16 @@
             let dataKelasIni = globalData.filter(row => {
                 if(!row['KELAS'] || row['KELAS'].trim() !== selectedKelas) return false;
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
+                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
                 if(endObj && rowDate > endObj) return false;
+                
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
+
                 return true;
             });
 
@@ -905,6 +735,7 @@
                     </div>
                 </div>
             `;
+            
             let htmlOutput = statsHtml; 
 
             if(modeRekapanKelas === 'mapel') {
@@ -942,10 +773,8 @@
                         let encMapel = escapeURL(sesi['MAPEL']);
                         let encMateri = escapeURL(rawMateri);
                         let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                         tbodyHtml += `<tr class="${rowClass} position-relative">
                             <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
@@ -1012,10 +841,8 @@
                     let encMapel = escapeURL(sesi['MAPEL']);
                     let encMateri = escapeURL(rawMateri);
                     let encFolder = escapeURL(rawFolder);
-                    let encStudio = escapeURL(sesi['STUDIO'] || '');
-                    let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
@@ -1085,9 +912,11 @@
 
             let dataPengajarIni = globalData.filter(row => {
                 if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
+                
                 if(!row['PENGAJAR']) return false;
                 let namaPecah = row['PENGAJAR'].split(',').map(s => s.trim());
                 if(!namaPecah.includes(selectedPengajar)) return false;
+                
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
                 if(startObj && rowDate < startObj) return false;
@@ -1096,6 +925,7 @@
                 totalSesiKeseluruhan++;
                 rowDate.setHours(0,0,0,0);
                 if (rowDate < todayObj) countSelesai++; else countBelum++;
+
                 return true;
             });
 
@@ -1153,10 +983,8 @@
                         let encMapel = escapeURL(sesi['MAPEL']);
                         let encMateri = escapeURL(rawMateri);
                         let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 mb-1 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                         tbodyHtml += `<tr class="${rowClass} position-relative">
                             <td><div class="d-flex align-items-center">${btnEdit}<div><div class="fw-bold" style="line-height: 1.1;">${sesi['Hari Tanggal'] || '-'}</div>${statusBadge}</div></div></td>
@@ -1224,10 +1052,8 @@
                     let encMapel = escapeURL(sesi['MAPEL']);
                     let encMateri = escapeURL(rawMateri);
                     let encFolder = escapeURL(rawFolder);
-                    let encStudio = escapeURL(sesi['STUDIO'] || '');
-                    let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                    let btnEdit = `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                     tbodyHtml += `<tr class="${rowClass}">
                         <td class="text-center text-muted fw-bold"><div class="d-flex justify-content-center align-items-center">${btnEdit}${noUrut++}</div></td>
@@ -1319,7 +1145,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, // Menyimpan referensi row untuk tombol edit
+                                rawRow: row,
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
@@ -1363,16 +1189,14 @@
                     sesiKe++;
                 }
 
-                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal'] || '');
-                let encWaktu = escapeURL(sesi.rawRow['WAKTU'] || '');
-                let encKelas = escapeURL(sesi.rawRow['KELAS'] || '');
-                let encMapel = escapeURL(sesi.rawRow['MAPEL'] || '');
+                let encTgl = escapeURL(sesi.rawRow['Hari Tanggal']);
+                let encWaktu = escapeURL(sesi.rawRow['WAKTU']);
+                let encKelas = escapeURL(sesi.rawRow['KELAS']);
+                let encMapel = escapeURL(sesi.rawRow['MAPEL']);
                 let encMateri = escapeURL(sesi.rawMateri);
                 let encFolder = escapeURL(sesi.rawFolder);
-                let encStudio = escapeURL(sesi.rawRow['STUDIO'] || '');
-                let encPengajar = escapeURL(sesi.rawRow['PENGAJAR'] || '');
 
-                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}', '${encStudio}', '${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>` : '';
+                let btnEdit = isAdminModeActive ? `<button class="btn btn-sm btn-primary btn-edit-sesi me-2 py-0 px-2 shadow-sm" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>` : '';
 
                 tbody += `
                     <tr class="position-relative">
@@ -1556,10 +1380,8 @@
                         let encMapel = escapeURL(sesi['MAPEL']);
                         let encMateri = escapeURL(rawMateri);
                         let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}', '${encStudio}', '${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                         htmlSesi += `<div class="jadwal-item d-flex flex-column position-relative mb-3 ${isBentrok ? 'bentrok-alert' : ''} ${itemClass}">
                             ${btnEdit}
@@ -1628,10 +1450,8 @@
                         let encMapel = escapeURL(sesi['MAPEL']);
                         let encMateri = escapeURL(rawMateri);
                         let encFolder = escapeURL(rawFolder);
-                        let encStudio = escapeURL(sesi['STUDIO'] || '');
-                        let encPengajar = escapeURL(sesi['PENGAJAR'] || '');
 
-                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}','${encStudio}','${encPengajar}')"><i class="fas fa-pencil-alt"></i></button>`;
+                        let btnEdit = `<button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 shadow-sm btn-edit-sesi" onclick="bukaModalEditSesi('${encTgl}','${encWaktu}','${encKelas}','${encMapel}','${encMateri}','${encFolder}')"><i class="fas fa-pencil-alt"></i></button>`;
 
                         htmlSesi += `
                         <div class="col-md-6 col-lg-4 col-xl-3 mb-3 d-flex">
@@ -1680,6 +1500,78 @@
             if (adaBentrokGlobal) $('#peringatanBentrokUtama').removeClass('d-none');
         }
         $('#pilihTanggal, #pilihBagianHarian').on('change', renderPantauanHarian);
+
+        // ==========================================
+        // FUNGSI BUKA MODAL RIWAYAT MATERI
+        // ==========================================
+        function bukaRiwayatMateri(encKelas, encMapel, encTgl, encWaktu) {
+            let kelas = decodeURIComponent(encKelas);
+            let mapel = decodeURIComponent(encMapel);
+            let tgl = decodeURIComponent(encTgl);
+            let waktu = decodeURIComponent(encWaktu);
+
+            let targetDateObj = parseDateFromCSV(tgl);
+            let targetWaktu = parseWaktuToMinutes(waktu);
+
+            let history = globalData.filter(r => {
+                if ((r['KELAS'] || '').trim() !== kelas) return false;
+                if ((r['MAPEL'] || '').trim() !== mapel) return false;
+                
+                let rDate = parseDateFromCSV(r['Hari Tanggal']);
+                if (!rDate) return false;
+                let rWaktu = parseWaktuToMinutes(r['WAKTU']);
+                
+                if (targetDateObj && rDate.getTime() < targetDateObj.getTime()) return true;
+                if (targetDateObj && rDate.getTime() === targetDateObj.getTime()) {
+                    if (targetWaktu && rWaktu && rWaktu.start < targetWaktu.start) return true;
+                }
+                return false;
+            });
+
+            history.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeB - timeA; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startB - startA;
+            });
+
+            let tbody = "";
+            if (history.length === 0) {
+                tbody = `<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada riwayat materi sebelumnya.</td></tr>`;
+            } else {
+                history.forEach((h) => {
+                    let hTanggal = h['Hari Tanggal'] || '-';
+                    let hWaktu = h['WAKTU'] || '-';
+                    let hMateri = h['MATERI YANG DIBAHAS'] ? h['MATERI YANG DIBAHAS'].trim() : '<em class="text-muted">Belum diisi</em>';
+                    let hFolder = h['FOLDER IPAD PEMBAHASAN'] ? h['FOLDER IPAD PEMBAHASAN'].trim() : '';
+                    if (hFolder && hFolder !== '-') {
+                        hMateri += `<div class="mt-1 pt-1 border-top border-light"><i class="fas fa-folder text-warning me-1" style="font-size:0.7rem;"></i> ${parseFolderLinks(hFolder)}</div>`;
+                    }
+                    
+                    let hPengajar = h['PENGAJAR'] || '-';
+
+                    tbody += `
+                    <tr>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-calendar-alt text-primary me-1"></i> ${hTanggal}</td>
+                        <td class="text-nowrap" style="font-size:0.8rem;"><i class="far fa-clock text-warning me-1"></i> ${hWaktu}</td>
+                        <td style="font-size:0.85rem;" class="fw-bold">${hMateri}</td>
+                        <td style="font-size:0.8rem;"><i class="fas fa-user-tie text-secondary me-1"></i> ${hPengajar}</td>
+                    </tr>`;
+                });
+            }
+
+            $('#modalRiwayatMateriLabel').html(`<i class="fas fa-history me-2"></i>Riwayat Materi: ${mapel} <span class="badge bg-secondary ms-2">${kelas}</span>`);
+            $('#bodyRiwayatMateri').html(tbody);
+            
+            let modal = new bootstrap.Modal(document.getElementById('modalRiwayatMateri'));
+            modal.show();
+        }
 
     </script>
 </body>
