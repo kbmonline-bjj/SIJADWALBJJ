@@ -433,7 +433,7 @@
 
     <script>
         // ==========================================
-        // URL GOOGLE APPS SCRIPT (SUDAH TERSAMBUNG)
+        // URL GOOGLE APPS SCRIPT
         // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
 
@@ -480,13 +480,15 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
+                // Removed mode: "no-cors"
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ payload: JSON.stringify(payload) })
             }).then(res => res.json())
               .then(data => {
                 $('#modalPengaturan').modal('hide');
                 alert(data.message);
             }).catch(err => {
+                alert("Gagal menyimpan ke server: " + err.message);
                 $('#modalPengaturan').modal('hide');
             }).finally(() => {
                 btn.html('<i class="fas fa-save me-1"></i> Simpan Email Saja').prop('disabled', false);
@@ -531,8 +533,9 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
+                // Removed mode: "no-cors"
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ payload: JSON.stringify(payload) })
             }).then(res => res.json())
               .then(data => {
                   if (data.status === 'success') {
@@ -541,7 +544,7 @@
                       alert("Error: " + data.message);
                   }
               }).catch(err => {
-                  alert("Gagal terhubung ke Google Calendar. Pastikan URL Script benar dan di-deploy sebagai 'Anyone'.");
+                  alert("Gagal terhubung ke Google Calendar: " + err.message);
               }).finally(() => {
                   btn.html('<i class="fas fa-calendar-plus me-1"></i> Mulai Sync Jadwal').prop('disabled', false);
               });
@@ -618,7 +621,6 @@
             let btn = $('#btnSimpanEdit');
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
 
-            // Kita harus kirim iso_date untuk kalender
             let rowDateStr = $('#editTanggalHidden').val();
             let parsedD = parseDateFromCSV(rowDateStr);
             let isoDateStr = "";
@@ -645,8 +647,9 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
+                // Removed mode: "no-cors"
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ payload: JSON.stringify(payload) })
             }).then(res => res.json())
               .then(data => {
                 $('#modalFormEdit').modal('hide');
@@ -658,7 +661,7 @@
                     alert("Error: " + data.message);
                 }
             }).catch(err => {
-                alert("Gagal terhubung ke server Google Sheets.");
+                alert("Gagal terhubung ke server Google Sheets: " + err.message);
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
             });
         }
