@@ -63,7 +63,8 @@
             <button onclick="showRoleSelection()" class="text-gray-400 hover:text-red-600 absolute top-4 left-4 transition"><i class="fas fa-arrow-left"></i> Kembali</button>
             <i class="fas fa-lock text-4xl text-gray-800 mb-4 mt-6"></i>
             <h2 class="text-2xl font-bold mb-4 text-gray-800">Otorisasi Admin</h2>
-            <input type="password" id="admin-code" placeholder="Masukkan Kode Akses" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-red-600 focus:outline-none mb-4 text-center text-lg tracking-widest">
+            <!-- DITAMBAHKAN ONKEYPRESS UNTUK DETEKSI TOMBOL ENTER -->
+            <input type="password" id="admin-code" placeholder="Masukkan Kode Akses" onkeypress="if(event.key === 'Enter') verifyAdmin()" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-red-600 focus:outline-none mb-4 text-center text-lg tracking-widest">
             <button onclick="verifyAdmin()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition">Akses Dasbor</button>
         </div>
     </div>
@@ -786,7 +787,6 @@
             renderStatsView(); 
         }
 
-        // --- PENYEMPURNAAN LOGIKA ANALITIK "PERLU PENANGANAN" ---
         function runAnalytics() {
             for(var nama in studentsData) {
                 var st = studentsData[nama];
@@ -810,7 +810,6 @@
                 }
                 
                 var alphaBeruntun = 0;
-                // LOGIKA BARU: Hanya hitung alpha beruntun JIKA siswa sudah pernah masuk minimal 1 kali
                 if (st.totalHadir > 0) {
                     for(var i = groupSessions.length - 1; i >= 0; i--) {
                         if(!st.attendedMap[groupSessions[i]]) alphaBeruntun++;
@@ -846,7 +845,6 @@
                          st.kritis = false;
                          st.lemah = false;
                     } else {
-                         // Evaluasi kritis dan lemah HANYA untuk siswa yang sudah mulai aktif
                          st.kritis = (st.totalHadir > 0 && alphaBeruntun >= 3);
                          st.lemah = (st.totalHadir > 0 && last12.length >= 12 && hadirDiLast12 <= 6);
                     }
@@ -1697,82 +1695,4 @@
         function downloadDbReportPDF() {
             var jsPDF = window.jspdf.jsPDF; var doc = new jsPDF('landscape');
             doc.setFontSize(18); doc.text("Laporan Database Master Siswa", 14, 15);
-            var today = new Date(); var dateStr = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            doc.setFontSize(11); doc.text("Dicetak pada: " + dateStr, 14, 22);
-
-            var dbArr = [];
-            for (var k in dbKontakSiswa) {
-                var dbItem = dbKontakSiswa[k]; var st = studentsData[k]; var isExcluded = false; var needsAction = false; var isHold = false;
-                if (st) { isExcluded = st.isExcluded; needsAction = st.needsAction; isHold = st.isHold && !needsAction; } 
-                else { var fu = latestStudentFU[k]; if(fu && fu.status === 'Abaikan') isExcluded = true; else if(fu && fu.status === 'Hold') isHold = true; }
-                if (dbCurrentFilter === 'action' && !needsAction) continue;
-                if (dbCurrentFilter === 'hold' && !isHold) continue;
-                if (dbCurrentFilter === 'done') { var fu2 = latestStudentFU[k]; if (!fu2 || fu2.status !== 'Selesai' || needsAction) continue; }
-                if (dbCurrentFilter === 'ignore' && !isExcluded) continue;
-                dbArr.push({ nama: dbItem.namaAsli, kelompok: st ? st.kelompok : dbItem.kelas, programBimbingan: dbItem.program, tanggalDaftar: dbItem.tglDaftar, waSiswa: dbItem.waSiswa, waOrtu: dbItem.waOrtu });
-            }
-            dbArr.sort((a, b) => a.nama.localeCompare(b.nama));
-            var rows = [];
-            for(var i=0; i<dbArr.length; i++) {
-                var row = dbArr[i]; var kontak = ""; if(row.waSiswa) kontak += "Siswa: " + row.waSiswa + "\n"; if(row.waOrtu) kontak += "Ortu: " + row.waOrtu;
-                var tgl = row.tanggalDaftar !== "-" ? getHariTanggalLengkap(row.tanggalDaftar) : "-";
-                rows.push({ no: i+1, n: row.nama, k: row.kelompok, p: row.programBimbingan, t: tgl, c: kontak });
-            }
-            doc.autoTable({ columns: [ { header: "No", dataKey: "no" }, { header: "Nama Siswa", dataKey: "n" }, { header: "Kelas", dataKey: "k" }, { header: "Program", dataKey: "p" }, { header: "Tgl Daftar", dataKey: "t" }, { header: "Kontak", dataKey: "c"} ], body: rows, startY: 28, theme: 'grid', headStyles: { fillColor: [31, 41, 55] }, alternateRowStyles: { fillColor: [249, 250, 251] } });
-            doc.save('Database_Siswa_' + today.getTime() + '.pdf');
-        }
-
-        function downloadStudentReportPDF(namaPDF) {
-            var name = namaPDF || document.getElementById('student-select').value;
-            if(!name) { Swal.fire('Perhatian', 'Nama siswa tidak ditemukan.', 'warning'); return; }
-            var cleanName = name.toUpperCase().trim(); var st = studentsData[cleanName];
-            if (!st) { var dbItem = dbKontakSiswa[cleanName]; st = { nama: dbItem.namaAsli, kelompok: dbItem.kelas, programBimbingan: dbItem.program, totalHadir: 0, records: [] }; }
-
-            var jsPDF = window.jspdf.jsPDF; var doc = new jsPDF('portrait');
-            doc.setFontSize(16); doc.text("Laporan Kehadiran & Perkembangan Siswa", 14, 15);
-            var today = new Date(); var dateStr = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            doc.setFontSize(10); doc.text("Dicetak pada: " + dateStr, 14, 22); doc.text("Nama Siswa: " + st.nama, 14, 28); doc.text("Kelompok & Program: " + st.kelompok + " (" + st.programBimbingan + ")", 14, 33); doc.text("Total Kehadiran Sesi: " + st.totalHadir + " Kali", 14, 38);
-
-            var sortedRecords = st.records.slice().sort((a, b) => { var dtA = a.tgl + " " + a.jamMulai; var dtB = b.tgl + " " + b.jamMulai; return dtB.localeCompare(dtA); });
-            var rows = [];
-            for(var i = 0; i < sortedRecords.length; i++) {
-                var r = sortedRecords[i]; var tglLengkap = getHariTanggalLengkap(r.tgl);
-                rows.push({ tgl: tglLengkap, waktu: r.jamMulai + " - " + r.jamSelesai, akses: r.kapanAkses, mapel: r.mapel, judul: r.judul });
-            }
-            if(rows.length === 0) rows.push({ tgl: "-", waktu: "-", akses: "Belum ada riwayat bimbingan", mapel: "-", judul: "-" });
-
-            doc.autoTable({ columns: [ { header: "Hari & Tanggal", dataKey: "tgl" }, { header: "Waktu", dataKey: "waktu" }, { header: "Kapan Akses", dataKey: "akses" }, { header: "Mata Pelajaran", dataKey: "mapel" }, { header: "Judul", dataKey: "judul" } ], body: rows, startY: 45, theme: 'grid', headStyles: { fillColor: [220, 38, 38] }, alternateRowStyles: { fillColor: [249, 250, 251] }, styles: { fontSize: 8 } });
-
-            var finalY = doc.lastAutoTable.finalY || 45;
-            var histRows = []; var studentHist = [];
-            for(var f=0; f<globalRiwayatFU.length; f++){ if((globalRiwayatFU[f]['Nama Siswa'] || "").toUpperCase() === st.nama.toUpperCase()) { studentHist.push(globalRiwayatFU[f]); } }
-            if(studentHist.length > 0) {
-                studentHist.reverse(); 
-                for(var i=0; i<studentHist.length; i++){ var h = studentHist[i]; histRows.push({ t: h['Timestamp'], s: h['Status'], c: h['Catatan'] }); }
-            } else { histRows.push({ t: "-", s: "-", c: "Belum ada catatan interaksi atau tindak lanjut." }); }
-            
-            doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text("Riwayat Tindak Lanjut & Interaksi", 14, finalY + 10);
-            doc.autoTable({ columns: [ { header: "Waktu Pencatatan", dataKey: "t" }, { header: "Kategori Status", dataKey: "s" }, { header: "Catatan Guru / Evaluasi", dataKey: "c" } ], body: histRows, startY: finalY + 14, theme: 'grid', headStyles: { fillColor: [31, 41, 55] }, alternateRowStyles: { fillColor: [249, 250, 251] }, styles: { fontSize: 8 }, columnStyles: { t: { cellWidth: 35 }, s: { cellWidth: 25, fontStyle: 'bold' } }, didParseCell: function(data) { if (data.section === 'body' && data.column.dataKey === 's') { if (data.cell.raw === 'Interaksi' || data.cell.raw === 'Teks Chat') data.cell.styles.textColor = [29, 78, 216]; else if (data.cell.raw === 'Selesai') data.cell.styles.textColor = [21, 128, 61]; else if (data.cell.raw === 'Tunda') data.cell.styles.textColor = [194, 65, 12]; else if (data.cell.raw === 'Hold') data.cell.styles.textColor = [217, 119, 6]; } } });
-            var safeFileName = st.nama.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            doc.save('Laporan_Siswa_' + safeFileName + '_' + today.getTime() + '.pdf');
-        }
-
-        function downloadStatsReportPDF() {
-            var jsPDF = window.jspdf.jsPDF; var doc = new jsPDF('portrait');
-            doc.setFontSize(18); doc.text("Laporan Analitik Prosentase Kehadiran", 14, 15);
-            var today = new Date(); var dateStr = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            doc.setFontSize(11); doc.text("Dicetak pada: " + dateStr, 14, 22);
-
-            var bulanRows = []; document.querySelectorAll('#stat-bulan-table tr').forEach(tr => { if(tr.cells.length === 3) bulanRows.push([tr.cells[0].innerText, tr.cells[1].innerText, tr.cells[2].innerText]); });
-            doc.setFontSize(14); doc.text("Rekapitulasi Per Bulan", 14, 32);
-            doc.autoTable({ head: [['Bulan', 'Hadir / Total Ekspektasi', 'Tingkat Kehadiran']], body: bulanRows, startY: 36, theme: 'grid', headStyles: { fillColor: [220, 38, 38] } });
-
-            var finalY = doc.lastAutoTable.finalY || 36;
-            var mingguRows = []; document.querySelectorAll('#stat-minggu-table tr').forEach(tr => { if(tr.cells.length === 3) mingguRows.push([tr.cells[0].innerText, tr.cells[1].innerText, tr.cells[2].innerText]); });
-            doc.setFontSize(14); doc.text("Rekapitulasi Per Minggu", 14, finalY + 10);
-            doc.autoTable({ head: [['Periode Minggu', 'Hadir / Total Ekspektasi', 'Tingkat Kehadiran']], body: mingguRows, startY: finalY + 14, theme: 'grid', headStyles: { fillColor: [5, 150, 105] } });
-            doc.save('Laporan_Prosentase_Kehadiran_' + today.getTime() + '.pdf');
-        }
-    </script>
-</body>
-</html>
+            var today = new Date(); var dateStr = today.toLocaleDateString('id-ID', { weekday: 'long', year:
