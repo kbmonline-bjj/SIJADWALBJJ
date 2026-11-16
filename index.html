@@ -69,16 +69,18 @@
         .collapsed .collapse-icon { transform: rotate(-90deg); }
         .border-dashed { border-top-style: dashed !important; border-top-width: 2px !important; }
 
-        .select2-container--default .select2-selection--single {
-            border-radius: 16px !important; border: 2px solid transparent !important; height: auto !important; padding: 0.6rem 0.5rem !important;
+        .select2-container--default .select2-selection--single, .select2-container--default .select2-selection--multiple {
+            border-radius: 16px !important; border: 2px solid transparent !important; height: auto !important; min-height: 45px !important; padding: 0.3rem 0.5rem !important;
             font-weight: 600 !important; color: #1e293b !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; transition: all 0.3s !important;
         }
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 100% !important; right: 15px !important; }
-        .select2-container--default.select2-container--open .select2-selection--single { border-color: #93c5fd !important; box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4) !important; }
+        .select2-container--default.select2-container--open .select2-selection--single, .select2-container--default.select2-container--focus .select2-selection--multiple { border-color: #93c5fd !important; box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.4) !important; }
         .select2-dropdown { border-radius: 12px !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; overflow: hidden !important; }
         .select2-search__field { border-radius: 8px !important; padding: 0.5rem !important; }
         .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { background-color: #4f46e5 !important; }
         .select2-pengajar-active .select2-results__option--highlighted { background-color: #f59e0b !important; }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice { background-color: #4f46e5 !important; color: white !important; border: none !important; border-radius: 8px !important; padding: 2px 8px !important; font-size: 0.8rem; margin-top: 6px !important;}
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: white !important; margin-right: 5px !important; }
         
         .table-periode th, .table-periode td { border: 1px solid #e2e8f0; }
         .table-periode thead th { background-color: #f1f5f9; color: #334155; }
@@ -95,8 +97,8 @@
         .tabel-absen { border-collapse: collapse; width: 100%; font-family: 'Arial', sans-serif; font-size: 11px; background: white;}
         .tabel-absen th, .tabel-absen td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; }
         .tabel-absen th { background-color: #d9d9d9 !important; font-weight: bold; }
-        .tabel-absen .header-kop { background-color: #d9d9d9 !important; font-weight: bold; text-align: left; padding: 5px 10px;}
-        .tabel-absen .header-box { text-align: center; font-weight: bold; padding: 5px; border: 1px solid #000;}
+        .header-kop { background-color: #d9d9d9 !important; font-weight: bold !important; text-align: left; padding: 5px 10px;}
+        .header-box { text-align: center; font-weight: bold !important; padding: 5px; border: 1px solid #000; display: flex; align-items: center; justify-content: center;}
 
         /* CSS KHUSUS SAAT MENEKAN TOMBOL PRINT */
         @media print {
@@ -107,8 +109,9 @@
             @page { size: landscape; margin: 10mm; }
             
             /* Paksa warna background header abu-abu ikut tercetak */
-            .tabel-absen th, .header-kop { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .tabel-absen th, .header-kop { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold !important; }
             .tabel-absen th, .tabel-absen td { border: 1px solid #000 !important; color: #000 !important; }
+            .header-box { font-weight: bold !important; }
             
             /* Sembunyikan pesan di bawah form saat cetak */
             #pesanCetak, .alert, .navbar, .header-section, .nav-pills { display: none !important; }
@@ -336,10 +339,12 @@
                     </div>
                     
                     <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <select id="pilihBagianCetak" class="form-select w-100 text-dark">
+                        <!-- MULTIPLE SELECT CABANG/BAGIAN -->
+                        <select id="pilihBagianCetak" class="form-select w-100 text-dark" multiple="multiple">
                             <option value="">Semua Cabang / Bagian</option>
                         </select>
-                        <select id="pilihKelasCetak" class="form-select w-100 text-dark">
+                        <!-- MULTIPLE SELECT KELAS -->
+                        <select id="pilihKelasCetak" class="form-select w-100 text-dark" multiple="multiple">
                             <option value="">Semua Kelas</option>
                         </select>
                         <div class="d-flex gap-2 w-100 mt-1">
@@ -363,11 +368,11 @@
                 <!-- AREA CETAK (TAMPIL DI LAYAR & KERTAS) -->
                 <div id="areaCetakHadir" class="bg-white p-2">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="border border-dark header-kop" style="width: 400px; font-size: 13px;">
+                        <div class="border border-dark header-kop" style="width: 400px; font-size: 13px; font-weight: bold;">
                             DAFTAR HADIR PENGAJAR LIVE STREAMING KANTOR PUSAT<br>
                             NEUTRON YOGYAKARTA
                         </div>
-                        <div class="border border-dark header-box" style="width: 200px; font-size: 13px; min-height: 25px;" id="labelKelasCetak">
+                        <div class="border border-dark header-box text-wrap" style="width: 250px; font-size: 12px; font-weight: bold; min-height: 40px;" id="labelKelasCetak">
                             BJJ
                         </div>
                     </div>
@@ -434,7 +439,6 @@
                         <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">*Gunakan tanda koma (,) jika email lebih dari satu.</small>
                     </div>
                     
-                    <!-- MENU SYNC RENTANG TANGGAL MASSAL -->
                     <div class="mb-3 pt-3 border-top">
                         <label class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="fas fa-sync-alt me-1 text-primary"></i> Sync Rentang Waktu ke Kalender:</label>
                         <div class="d-flex gap-2 align-items-center">
@@ -841,7 +845,6 @@
             return `${namaHari[tgl.getDay()]}, ${d} ${namaBulan[tgl.getMonth()]} ${y}`;
         }
         
-        // Format Khusus untuk Cetak Daftar Hadir ("Kamis <br> 12-Nov-26")
         function formatShortDatePrint(dateStr) {
             if(!dateStr) return "";
             let parts = dateStr.split(',');
@@ -954,17 +957,21 @@
             $('#pilihKelasHarian').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
         }
 
+        // PERBAIKAN: INISIALISASI MULTIPLE SELECT UNTUK FILTER CETAK
         function updateKelasDropdown(bagian) {
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
+            
             let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
-            let opsiSemuaKelas = '<option value="">Semua Kelas</option>'; // Khusus Cetak Daftar Hadir
+            let opsiCetak = ''; // Untuk multiple, hilangkan option value kosong agar placeholder rapi
+            
             kelasUnik.forEach(k => { 
                 opsiKelas += `<option value="${k}">${k}</option>`; 
-                opsiSemuaKelas += `<option value="${k}">${k}</option>`;
+                opsiCetak += `<option value="${k}">${k}</option>`;
             });
+            
             $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
-            $('#pilihKelasCetak').html(opsiSemuaKelas).select2({ placeholder: "Semua Kelas", allowClear: true });
+            $('#pilihKelasCetak').html(opsiCetak).select2({ placeholder: "Semua Kelas", allowClear: true, multiple: true });
         }
 
         function updatePengajarDropdown(bagian) {
@@ -997,16 +1004,22 @@
                     if($('#pilihBagianHarian option').length <= 1) {
                         let cabangUnik = [...new Set(globalData.map(item => item['CBG/BAG'] ? item['CBG/BAG'].trim() : ''))];
                         cabangUnik = cabangUnik.filter(c => c !== '').sort();
-                        let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
-                        cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
                         
-                        $('#pilihBagianHarian, #pilihBagianKelas, #pilihBagianCetak').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
+                        let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
+                        let opsiCabangCetak = ''; // Multiple select
+                        
+                        cabangUnik.forEach(c => { 
+                            opsiCabang += `<option value="${c}">${c}</option>`; 
+                            opsiCabangCetak += `<option value="${c}">${c}</option>`; 
+                        });
+                        
+                        $('#pilihBagianHarian, #pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                         $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
+                        $('#pilihBagianCetak').html(opsiCabangCetak).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, multiple: true });
 
                         $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                         $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                         $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
-                        $('#pilihBagianCetak').val("Bag. Online").trigger('change.select2');
                         
                         updateKelasDropdown("Bag. Online");
                         updatePengajarDropdown("Bag. Online");
@@ -1035,15 +1048,26 @@
         $('#pilihBagianPengajar').on('change', function() { updatePengajarDropdown($(this).val()); renderRekapanPengajar(); });
         
         // Pemicu Filter Cetak Daftar Hadir
-        $('#pilihBagianCetak').on('change', function() { updateKelasDropdown($(this).val()); renderDaftarHadir(); });
+        $('#pilihBagianCetak').on('change', function() { 
+            let selectedBagians = $(this).val() || [];
+            
+            // Re-populate Kelas dropdown based on multiple selected Bagian
+            let dataFiltered = selectedBagians.length > 0 ? globalData.filter(r => r['CBG/BAG'] && selectedBagians.includes(r['CBG/BAG'].trim())) : globalData;
+            let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
+            let opsiCetak = '';
+            kelasUnik.forEach(k => { opsiCetak += `<option value="${k}">${k}</option>`; });
+            $('#pilihKelasCetak').html(opsiCetak).trigger('change.select2');
+            
+            renderDaftarHadir(); 
+        });
         $('#pilihKelasCetak, #startDateCetak, #endDateCetak').on('change', renderDaftarHadir);
 
         // ==========================================
         // RENDER CETAK DAFTAR HADIR EXCEL
         // ==========================================
         function renderDaftarHadir() {
-            let selectedBagian = $('#pilihBagianCetak').val();
-            let selectedKelas = $('#pilihKelasCetak').val();
+            let selectedBagians = $('#pilihBagianCetak').val() || [];
+            let selectedKelas = $('#pilihKelasCetak').val() || [];
             let startVal = $('#startDateCetak').val();
             let endVal = $('#endDateCetak').val();
             
@@ -1053,8 +1077,8 @@
             if(endObj) endObj.setHours(23,59,59,999);
 
             let dataHadir = globalData.filter(row => {
-                if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
-                if(selectedKelas && (!row['KELAS'] || row['KELAS'].trim() !== selectedKelas)) return false;
+                if(selectedBagians.length > 0 && (!row['CBG/BAG'] || !selectedBagians.includes(row['CBG/BAG'].trim()))) return false;
+                if(selectedKelas.length > 0 && (!row['KELAS'] || !selectedKelas.includes(row['KELAS'].trim()))) return false;
                 
                 let rowDate = parseDateFromCSV(row['Hari Tanggal']);
                 if(!rowDate) return false;
@@ -1071,7 +1095,10 @@
             
             $('#pesanCetak').addClass('d-none');
             $('#areaCetakHadir').removeClass('d-none');
-            $('#labelKelasCetak').text(selectedKelas ? selectedKelas : "SEMUA KELAS");
+            
+            // JIKA KOSONG = TAMPILKAN BJJ (DEFAULT TEXT)
+            let labelPrint = selectedKelas.length > 0 ? selectedKelas.join(", ") : "BJJ";
+            $('#labelKelasCetak').text(labelPrint);
 
             // Sort by Tanggal -> Jam
             dataHadir.sort((a, b) => {
@@ -1591,7 +1618,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, // Menyimpan referensi row untuk tombol edit
+                                rawRow: row, 
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
