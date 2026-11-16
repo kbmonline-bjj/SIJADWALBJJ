@@ -79,8 +79,37 @@
         .select2-search__field { border-radius: 8px !important; padding: 0.5rem !important; }
         .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable { background-color: #4f46e5 !important; }
         .select2-pengajar-active .select2-results__option--highlighted { background-color: #f59e0b !important; }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice { background-color: #4f46e5 !important; color: white !important; border: none !important; border-radius: 8px !important; padding: 2px 8px !important; font-size: 0.8rem; margin-top: 6px !important;}
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: white !important; margin-right: 5px !important; }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice { 
+            background-color: #4f46e5 !important; 
+            color: white !important; 
+            border: none !important; 
+            border-radius: 6px !important; 
+            font-size: 0.75rem; 
+            margin-top: 6px !important; 
+            padding: 0 !important; 
+            display: inline-flex !important;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+            padding: 3px 10px 3px 6px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { 
+            color: white !important; 
+            background: rgba(0,0,0,0.15) !important; 
+            border: none !important;
+            border-right: 1px solid rgba(255,255,255,0.3) !important;
+            padding: 3px 8px !important;
+            font-weight: bold !important;
+            position: relative !important;
+            transition: 0.2s;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            background: #ef4444 !important;
+            color: white !important;
+        }
         
         .table-periode th, .table-periode td { border: 1px solid #e2e8f0; }
         .table-periode thead th { background-color: #f1f5f9; color: #334155; }
@@ -92,6 +121,25 @@
         .admin-mode-active .btn-edit-sesi { display: inline-flex !important; }
         
         .btn-settings:hover { background-color: #e2e8f0 !important; }
+
+        /* MASONRY GRID UNTUK MODE KELAS */
+        .studio-grid {
+            column-count: 1;
+            column-gap: 1.5rem;
+            width: 100%;
+        }
+        @media (min-width: 768px) { .studio-grid { column-count: 2; } }
+        @media (min-width: 992px) { .studio-grid { column-count: 3; } }
+        @media (min-width: 1400px) { .studio-grid { column-count: 4; } }
+
+        .studio-item-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            width: 100%;
+            vertical-align: top;
+        }
 
         /* TABEL DAFTAR HADIR (TAMPILAN WEB & PRINT) */
         .tabel-absen { border-collapse: collapse; width: 100%; font-family: 'Arial', sans-serif; font-size: 11px; background: white;}
@@ -330,98 +378,118 @@
 
             <!-- TAB 4: CETAK DAFTAR HADIR EXCEL FORMAT -->
             <div class="tab-pane fade" id="cetak" role="tabpanel">
-                <div class="header-section header-cetak mt-0">
-                    <div class="flex-grow-1 mb-3 mb-md-0">
-                        <h2 class="fw-bold mb-2"><i class="fas fa-print me-2"></i>Cetak Daftar Hadir</h2>
-                        <p class="text-white-50 mb-0">Format tabel disesuaikan otomatis untuk cetak kertas (Landscape).</p>
-                    </div>
-                    
-                    <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
-                        <!-- MULTIPLE SELECT CABANG/BAGIAN -->
-                        <div class="w-100">
-                            <select id="pilihBagianCetak" class="form-select w-100 text-dark" multiple="multiple"></select>
-                            <div class="d-flex justify-content-end gap-2 mt-1">
-                                <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
-                                <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
-                            </div>
-                        </div>
-
-                        <!-- MULTIPLE SELECT KELAS -->
-                        <div class="w-100">
-                            <select id="pilihKelasCetak" class="form-select w-100 text-dark" multiple="multiple"></select>
-                            <div class="d-flex justify-content-end gap-2 mt-1">
-                                <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
-                                <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 w-100 mt-1">
-                            <div class="w-50">
-                                <span class="date-filter-label">Dari Tanggal:</span>
-                                <input type="date" id="startDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                            <div class="w-50">
-                                <span class="date-filter-label">Sampai Tanggal:</span>
-                                <input type="date" id="endDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
-                            </div>
-                        </div>
-                        <button class="btn btn-success fw-bold mt-2 py-2 w-100 shadow-sm" onclick="window.print()"><i class="fas fa-print me-2"></i> Cetak Sekarang (Ctrl+P)</button>
-                    </div>
-                </div>
-
-                <div id="pesanCetak" class="alert alert-light shadow-sm rounded-4 border py-4 text-center text-muted d-none">
-                    <i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p class="mb-0">Tidak ada jadwal pada filter tersebut.</p>
-                </div>
-
-                <!-- AREA CETAK (TAMPIL DI LAYAR & KERTAS) -->
-                <div id="areaCetakHadir" class="bg-white p-2">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="border border-dark header-kop" style="width: 400px; font-size: 13px; font-weight: bold;">
-                            DAFTAR HADIR PENGAJAR LIVE STREAMING KANTOR PUSAT<br>
-                            NEUTRON YOGYAKARTA
-                        </div>
-                        <div class="border border-dark header-box text-wrap" style="width: 250px; font-size: 12px; font-weight: bold; min-height: 40px;" id="labelKelasCetak">
-                            BJJ
+                <div class="lock-screen text-center py-5 my-3 bg-white rounded-4 shadow-sm border border-light w-100">
+                    <div class="mb-4 mt-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fas fa-lock fs-2 text-secondary"></i>
                         </div>
                     </div>
-
-                    <table class="tabel-absen">
-                        <thead>
-                            <tr>
-                                <th rowspan="2" style="width: 3%;">NO</th>
-                                <th rowspan="2" style="width: 8%;">HARI/TGL</th>
-                                <th rowspan="2" style="width: 14%;">NAMA<br>PENGAJAR</th>
-                                <th rowspan="2" style="width: 10%;">MAPEL</th>
-                                <th rowspan="2" style="width: 15%;">MATERI / BAB YANG<br>DIBAHAS<br><span style="font-size:9px; font-weight:normal;">( YANG DITULIS<br>BUKAN KODE SOAL )</span></th>
-                                <th rowspan="2" style="width: 10%;">WAKTU<br>MENGAJAR</th>
-                                <th rowspan="2" style="width: 10%;">KELAS</th>
-                                <th colspan="2" style="width: 8%;">JAM</th>
-                                <th colspan="3" style="width: 9%;">JML AUDIENCE</th>
-                                <th rowspan="2" style="width: 10%;">RENCANA<br>MATERI<br>BERIKUTNYA</th>
-                                <th rowspan="2" style="width: 6%;">TTD</th>
-                                <th rowspan="2" style="width: 7%;">KET</th>
-                            </tr>
-                            <tr>
-                                <th>DTG</th>
-                                <th>PLG</th>
-                                <th>0 -15'</th>
-                                <th>15'-45'</th>
-                                <th>45'-75'</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bodyDaftarHadir">
-                            <!-- Baris diisi oleh JS -->
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="15" style="text-align: left; border: none !important; font-style: italic; font-weight: bold; font-size: 10px; padding-top: 8px;">
-                                    * Mohon pengajar untuk mengisikan jam datang (sesuai jam datang/standby di studio)
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <h4 class="fw-bold text-dark mb-2">Akses Terbatas</h4>
+                    <p class="text-muted mb-4">Silakan masukkan kode akses untuk membuka fitur cetak.</p>
+                    <div class="d-flex justify-content-center mx-auto mb-3" style="max-width: 320px;">
+                        <input type="password" class="form-control form-control-modern text-center me-2 input-kode" placeholder="Masukkan Kode">
+                        <button class="btn btn-secondary px-4 fw-bold rounded-3 btn-unlock" onclick="bukaAkses(this)">Buka</button>
+                    </div>
+                    <div class="text-danger fw-bold error-kode d-none" style="font-size: 0.85rem;"><i class="fas fa-exclamation-circle me-1"></i> Kode akses salah!</div>
                 </div>
 
+                <div class="secured-content d-none">
+                    <div class="header-section header-cetak mt-0">
+                        <div class="flex-grow-1 mb-3 mb-md-0">
+                            <h2 class="fw-bold mb-2"><i class="fas fa-print me-2"></i>Cetak Daftar Hadir</h2>
+                            <p class="text-white-50 mb-0">Format tabel disesuaikan otomatis untuk cetak kertas (Landscape).</p>
+                        </div>
+                        
+                        <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                            <!-- MULTIPLE SELECT CABANG/BAGIAN -->
+                            <div class="w-100">
+                                <select id="pilihBagianCetak" class="form-select w-100 text-dark" multiple="multiple">
+                                    <option value="">Semua Cabang / Bagian</option>
+                                </select>
+                                <div class="d-flex justify-content-end gap-2 mt-1">
+                                    <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
+                                    <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
+                                </div>
+                            </div>
+
+                            <!-- MULTIPLE SELECT KELAS -->
+                            <div class="w-100">
+                                <select id="pilihKelasCetak" class="form-select w-100 text-dark" multiple="multiple">
+                                    <option value="">Semua Kelas</option>
+                                </select>
+                                <div class="d-flex justify-content-end gap-2 mt-1">
+                                    <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
+                                    <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 w-100 mt-1">
+                                <div class="w-50">
+                                    <span class="date-filter-label">Dari Tanggal:</span>
+                                    <input type="date" id="startDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                                <div class="w-50">
+                                    <span class="date-filter-label">Sampai Tanggal:</span>
+                                    <input type="date" id="endDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                                </div>
+                            </div>
+                            <button class="btn btn-success fw-bold mt-2 py-2 w-100 shadow-sm" onclick="window.print()"><i class="fas fa-print me-2"></i> Cetak Sekarang (Ctrl+P)</button>
+                        </div>
+                    </div>
+
+                    <div id="pesanCetak" class="alert alert-light shadow-sm rounded-4 border py-4 text-center text-muted d-none">
+                        <i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p class="mb-0">Tidak ada jadwal pada filter tersebut.</p>
+                    </div>
+
+                    <!-- AREA CETAK (TAMPIL DI LAYAR & KERTAS) -->
+                    <div id="areaCetakHadir" class="bg-white p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="border border-dark header-kop" style="width: 400px; font-size: 13px; font-weight: bold;">
+                                DAFTAR HADIR PENGAJAR LIVE STREAMING KANTOR PUSAT<br>
+                                NEUTRON YOGYAKARTA
+                            </div>
+                            <div class="border border-dark header-box text-wrap" style="width: 250px; font-size: 12px; font-weight: bold; min-height: 40px;" id="labelKelasCetak">
+                                BJJ
+                            </div>
+                        </div>
+
+                        <table class="tabel-absen">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="width: 3%;">NO</th>
+                                    <th rowspan="2" style="width: 8%;">HARI/TGL</th>
+                                    <th rowspan="2" style="width: 14%;">NAMA<br>PENGAJAR</th>
+                                    <th rowspan="2" style="width: 10%;">MAPEL</th>
+                                    <th rowspan="2" style="width: 15%;">MATERI / BAB YANG<br>DIBAHAS<br><span style="font-size:9px; font-weight:normal;">( YANG DITULIS<br>BUKAN KODE SOAL )</span></th>
+                                    <th rowspan="2" style="width: 10%;">WAKTU<br>MENGAJAR</th>
+                                    <th rowspan="2" style="width: 10%;">KELAS</th>
+                                    <th colspan="2" style="width: 8%;">JAM</th>
+                                    <th colspan="3" style="width: 9%;">JML AUDIENCE</th>
+                                    <th rowspan="2" style="width: 10%;">RENCANA<br>MATERI<br>BERIKUTNYA</th>
+                                    <th rowspan="2" style="width: 6%;">TTD</th>
+                                    <th rowspan="2" style="width: 7%;">KET</th>
+                                </tr>
+                                <tr>
+                                    <th>DTG</th>
+                                    <th>PLG</th>
+                                    <th>0 -15'</th>
+                                    <th>15'-45'</th>
+                                    <th>45'-75'</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyDaftarHadir">
+                                <!-- Baris diisi oleh JS -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="15" style="text-align: left; border: none !important; font-style: italic; font-weight: bold; font-size: 10px; padding-top: 8px;">
+                                        * Mohon pengajar untuk mengisikan jam datang (sesuai jam datang/standby di studio)
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -580,7 +648,9 @@
         let modeRekapanPengajar = 'mapel'; 
         
         let isAdminModeActive = false;
-        const KODE_RAHASIA = "admin123"; 
+        
+        // KODE AKSES UNIVERSAL UNTUK SEMUA TAB (TERMASUK PRINT)
+        const KODE_RAHASIA = "BJJ2026"; 
 
         function escapeHTML(str) {
             if (str === null || str === undefined) return "";
@@ -733,6 +803,8 @@
 
         function prosesVerifyAdmin() {
             let kode = $('#inputVerifyAdmin').val();
+            // Kode rahasia Admin (terpisah dari kode akses Tab) jika ingin dibedakan, 
+            // namun di sini kita samakan saja demi kepraktisan
             if (kode === KODE_RAHASIA) {
                 $('#modalVerifyAdmin').modal('hide');
                 isAdminModeActive = true;
@@ -828,7 +900,7 @@
         });
 
         // ==========================================
-        // SISTEM KODE AKSES RAHASIA
+        // SISTEM KODE AKSES RAHASIA (Semua Tab Sekaligus)
         // ==========================================
         function bukaAkses(btn) {
             let container = $(btn).closest('.lock-screen');
@@ -836,6 +908,7 @@
             let errorMsg = container.find('.error-kode');
 
             if(inputVal === KODE_RAHASIA) {
+                // Membuka SEMUA Tab yang tersembunyi secara bersamaan
                 $('.lock-screen').fadeOut(300, function() {
                     $(this).addClass('d-none');
                     $('.secured-content').removeClass('d-none').hide().fadeIn(400);
@@ -848,6 +921,9 @@
         }
         $(document).on('keypress', '.input-kode', function (e) { if (e.which == 13) { bukaAkses(this); } });
 
+        // ==========================================
+        // FUNGSI UBAH LINK JADI TOMBOL KLIK
+        // ==========================================
         function parseFolderLinks(folderStr) {
             if (!folderStr || folderStr === '-') return '';
             let urlRegex = /(https?:\/\/[^\s,]+)/g;
@@ -907,6 +983,21 @@
             let match = waktuStr.match(/(\d{1,2})[\.\:](\d{2})\s*-\s*(\d{1,2})[\.\:](\d{2})/);
             if (match) return { start: parseInt(match[1]) * 60 + parseInt(match[2]), end: parseInt(match[3]) * 60 + parseInt(match[4]) };
             return null;
+        }
+
+        function getWeekRange(dateStr) {
+            let parts = dateStr.split('-');
+            let d = new Date(parts[0], parts[1] - 1, parts[2]);
+            let day = d.getDay(); 
+            let diffToMonday = d.getDate() - day + (day === 0 ? -6 : 1);
+            let monday = new Date(d.getFullYear(), d.getMonth(), diffToMonday);
+            monday.setHours(0,0,0,0);
+            
+            let sunday = new Date(monday.getTime());
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23,59,59,999);
+            
+            return { start: monday, end: sunday };
         }
 
         function ubahMode(mode) {
@@ -975,7 +1066,6 @@
             $('#pilihKelasHarian').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
         }
 
-        // PERBAIKAN: INISIALISASI MULTIPLE SELECT UNTUK FILTER CETAK
         function updateKelasDropdown(bagian) {
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
@@ -989,7 +1079,7 @@
             });
             
             $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
-            $('#pilihKelasCetak').html(opsiCetak).select2({ placeholder: "Semua Kelas BJJ", allowClear: true, multiple: true });
+            $('#pilihKelasCetak').html(opsiCetak).select2({ placeholder: "Semua Kelas", allowClear: true, multiple: true });
         }
 
         function updatePengajarDropdown(bagian) {
@@ -1070,7 +1160,6 @@
         $('#pilihBagianCetak').on('change', function() { 
             let selectedBagians = $(this).val() || [];
             
-            // Re-populate Kelas dropdown based on multiple selected Bagian
             let dataFiltered = selectedBagians.length > 0 ? globalData.filter(r => r['CBG/BAG'] && selectedBagians.includes(r['CBG/BAG'].trim())) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
             let opsiCetak = '';
@@ -1648,7 +1737,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, // Menyimpan referensi row untuk tombol edit
+                                rawRow: row, 
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
