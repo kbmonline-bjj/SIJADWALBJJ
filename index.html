@@ -146,7 +146,7 @@
         .tabel-absen th, .tabel-absen td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; }
         .tabel-absen th { background-color: #d9d9d9 !important; font-weight: bold; }
         .header-kop { background-color: #d9d9d9 !important; font-weight: bold !important; text-align: left; padding: 5px 10px;}
-        .header-box { text-align: center; font-weight: bold !important; padding: 5px; border: 1px solid #000; display: flex; align-items: center; justify-content: center;}
+        .header-box { text-align: center; padding: 5px; border: 1px solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center;}
 
         /* CSS KHUSUS SAAT MENEKAN TOMBOL PRINT */
         @media print {
@@ -156,9 +156,9 @@
             #areaCetakHadir { position: absolute; left: 0; top: 0; width: 100%; }
             @page { size: landscape; margin: 10mm; }
             
+            /* Paksa warna background header abu-abu ikut tercetak */
             .tabel-absen th, .header-kop { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold !important; }
             .tabel-absen th, .tabel-absen td { border: 1px solid #000 !important; color: #000 !important; }
-            .header-box { font-weight: bold !important; }
             
             #pesanCetak, .alert, .navbar, .header-section, .nav-pills { display: none !important; }
         }
@@ -448,8 +448,11 @@
                                 DAFTAR HADIR PENGAJAR LIVE STREAMING KANTOR PUSAT<br>
                                 NEUTRON YOGYAKARTA
                             </div>
-                            <div class="border border-dark header-box text-wrap" style="width: 250px; font-size: 12px; font-weight: bold; min-height: 40px;" id="labelKelasCetak">
-                                BJJ
+                            
+                            <!-- KOTAK JUDUL KELAS STATIS -->
+                            <div class="border border-dark header-box text-wrap flex-column" style="width: 250px; font-size: 14px; font-weight: bold; min-height: 40px; justify-content: center;" id="labelKelasCetak">
+                                <span style="font-weight: bold;">BJJ</span><br>
+                                <span style="font-size: 11px; font-weight: normal;">(Bimbingan Jarak Jauh)</span>
                             </div>
                         </div>
 
@@ -489,11 +492,11 @@
                             </tfoot>
                         </table>
                     </div>
-                </div>
-            </div>
 
+                </div>
+
+            </div>
         </div>
-    </div>
 
     <!-- MODAL PENGATURAN INTEGRASI KALENDER -->
     <div class="modal fade" id="modalPengaturan" tabindex="-1" aria-hidden="true">
@@ -803,8 +806,7 @@
 
         function prosesVerifyAdmin() {
             let kode = $('#inputVerifyAdmin').val();
-            // Kode rahasia Admin (terpisah dari kode akses Tab) jika ingin dibedakan, 
-            // namun di sini kita samakan saja demi kepraktisan
+            // Kode rahasia Admin
             if (kode === KODE_RAHASIA) {
                 $('#modalVerifyAdmin').modal('hide');
                 isAdminModeActive = true;
@@ -983,21 +985,6 @@
             let match = waktuStr.match(/(\d{1,2})[\.\:](\d{2})\s*-\s*(\d{1,2})[\.\:](\d{2})/);
             if (match) return { start: parseInt(match[1]) * 60 + parseInt(match[2]), end: parseInt(match[3]) * 60 + parseInt(match[4]) };
             return null;
-        }
-
-        function getWeekRange(dateStr) {
-            let parts = dateStr.split('-');
-            let d = new Date(parts[0], parts[1] - 1, parts[2]);
-            let day = d.getDay(); 
-            let diffToMonday = d.getDate() - day + (day === 0 ? -6 : 1);
-            let monday = new Date(d.getFullYear(), d.getMonth(), diffToMonday);
-            monday.setHours(0,0,0,0);
-            
-            let sunday = new Date(monday.getTime());
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23,59,59,999);
-            
-            return { start: monday, end: sunday };
         }
 
         function ubahMode(mode) {
@@ -1204,21 +1191,6 @@
             $('#pesanCetak').addClass('d-none');
             $('#areaCetakHadir').removeClass('d-none');
             
-            // JIKA KOSONG = TAMPILKAN BJJ (DEFAULT TEXT)
-            let labelPrint = "BJJ";
-            let totalKelasOpsi = $('#pilihKelasCetak option').length;
-            
-            if (selectedKelas.length > 0) {
-                if (selectedKelas.length === totalKelasOpsi && totalKelasOpsi > 0) {
-                    labelPrint = "SEMUA KELAS";
-                } else if (selectedKelas.length <= 4) {
-                    labelPrint = selectedKelas.join(", ");
-                } else {
-                    labelPrint = selectedKelas.slice(0, 4).join(", ") + ", DLL...";
-                }
-            }
-            $('#labelKelasCetak').text(labelPrint);
-
             // Sort by Tanggal -> Jam
             dataHadir.sort((a, b) => {
                 let dateA = parseDateFromCSV(a['Hari Tanggal']);
@@ -1242,7 +1214,6 @@
                 let dateDisplay = "";
                 let noDisplay = "";
                 
-                // Mencegah duplikasi tanggal (meniru efek merge cell excel)
                 if(currDate !== lastDate) {
                      dateDisplay = formatShortDatePrint(currDate);
                      noDisplay = no++;
@@ -1255,17 +1226,17 @@
                         <td>${dateDisplay}</td>
                         <td>${row['PENGAJAR'] || ''}</td>
                         <td>${row['MAPEL'] || ''}</td>
-                        <td></td> <!-- Materi Dikosongi -->
+                        <td></td>
                         <td>${row['WAKTU'] || ''}</td>
                         <td>${row['KELAS'] || ''}</td>
-                        <td></td> <!-- Jam DTG -->
-                        <td></td> <!-- Jam PLG -->
-                        <td></td> <!-- Audience 0-15 -->
-                        <td></td> <!-- Audience 15-45 -->
-                        <td></td> <!-- Audience 45-75 -->
-                        <td></td> <!-- Rencana Materi -->
-                        <td></td> <!-- TTD -->
-                        <td></td> <!-- KET -->
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 `;
             });
@@ -1737,7 +1708,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, 
+                                rawRow: row, // Menyimpan referensi row untuk tombol edit
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
