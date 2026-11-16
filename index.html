@@ -108,12 +108,10 @@
             #areaCetakHadir { position: absolute; left: 0; top: 0; width: 100%; }
             @page { size: landscape; margin: 10mm; }
             
-            /* Paksa warna background header abu-abu ikut tercetak */
             .tabel-absen th, .header-kop { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: bold !important; }
             .tabel-absen th, .tabel-absen td { border: 1px solid #000 !important; color: #000 !important; }
             .header-box { font-weight: bold !important; }
             
-            /* Sembunyikan pesan di bawah form saat cetak */
             #pesanCetak, .alert, .navbar, .header-section, .nav-pills { display: none !important; }
         }
     </style>
@@ -340,13 +338,23 @@
                     
                     <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
                         <!-- MULTIPLE SELECT CABANG/BAGIAN -->
-                        <select id="pilihBagianCetak" class="form-select w-100 text-dark" multiple="multiple">
-                            <option value="">Semua Cabang / Bagian</option>
-                        </select>
+                        <div class="w-100">
+                            <select id="pilihBagianCetak" class="form-select w-100 text-dark" multiple="multiple"></select>
+                            <div class="d-flex justify-content-end gap-2 mt-1">
+                                <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
+                                <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllBagian()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
+                            </div>
+                        </div>
+
                         <!-- MULTIPLE SELECT KELAS -->
-                        <select id="pilihKelasCetak" class="form-select w-100 text-dark" multiple="multiple">
-                            <option value="">Semua Kelas</option>
-                        </select>
+                        <div class="w-100">
+                            <select id="pilihKelasCetak" class="form-select w-100 text-dark" multiple="multiple"></select>
+                            <div class="d-flex justify-content-end gap-2 mt-1">
+                                <span class="badge bg-light text-primary border border-primary-subtle cursor-pointer shadow-sm" onclick="selectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-check-double me-1"></i>Pilih Semua</span>
+                                <span class="badge bg-light text-danger border border-danger-subtle cursor-pointer shadow-sm" onclick="deselectAllKelas()" style="font-size: 0.65rem;"><i class="fas fa-times me-1"></i>Kosongkan</span>
+                            </div>
+                        </div>
+
                         <div class="d-flex gap-2 w-100 mt-1">
                             <div class="w-50">
                                 <span class="date-filter-label">Dari Tanggal:</span>
@@ -585,6 +593,31 @@
         }
 
         // ==========================================
+        // FUNGSI PILIH/KOSONGKAN SEMUA PADA CETAK
+        // ==========================================
+        function selectAllBagian() {
+            let allValues = [];
+            $('#pilihBagianCetak option').each(function() {
+                if($(this).val() !== "") allValues.push($(this).val());
+            });
+            $('#pilihBagianCetak').val(allValues).trigger('change');
+        }
+        function deselectAllBagian() {
+            $('#pilihBagianCetak').val(null).trigger('change');
+        }
+
+        function selectAllKelas() {
+            let allValues = [];
+            $('#pilihKelasCetak option').each(function() {
+                if($(this).val() !== "") allValues.push($(this).val());
+            });
+            $('#pilihKelasCetak').val(allValues).trigger('change');
+        }
+        function deselectAllKelas() {
+            $('#pilihKelasCetak').val(null).trigger('change');
+        }
+
+        // ==========================================
         // FUNGSI PENGATURAN INTEGRASI KALENDER
         // ==========================================
         function bukaPengaturan() {
@@ -682,7 +715,7 @@
         }
 
         // ==========================================
-        // FUNGSI MODE EDIT (CRUD)
+        // FUNGSI MODE EDIT (CRUD) VIA DATA ATTRIBUTES
         // ==========================================
         function toggleAdminMode() {
             if(isAdminModeActive) {
@@ -876,21 +909,6 @@
             return null;
         }
 
-        function getWeekRange(dateStr) {
-            let parts = dateStr.split('-');
-            let d = new Date(parts[0], parts[1] - 1, parts[2]);
-            let day = d.getDay(); 
-            let diffToMonday = d.getDate() - day + (day === 0 ? -6 : 1);
-            let monday = new Date(d.getFullYear(), d.getMonth(), diffToMonday);
-            monday.setHours(0,0,0,0);
-            
-            let sunday = new Date(monday.getTime());
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23,59,59,999);
-            
-            return { start: monday, end: sunday };
-        }
-
         function ubahMode(mode) {
             modeTampilan = mode;
             $('#btnModeStudio, #btnModeJam, #btnModeKelas').removeClass('active');
@@ -963,7 +981,7 @@
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
             
             let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
-            let opsiCetak = ''; // Untuk multiple, hilangkan option value kosong agar placeholder rapi
+            let opsiCetak = ''; 
             
             kelasUnik.forEach(k => { 
                 opsiKelas += `<option value="${k}">${k}</option>`; 
@@ -971,7 +989,7 @@
             });
             
             $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
-            $('#pilihKelasCetak').html(opsiCetak).select2({ placeholder: "Semua Kelas", allowClear: true, multiple: true });
+            $('#pilihKelasCetak').html(opsiCetak).select2({ placeholder: "Semua Kelas BJJ", allowClear: true, multiple: true });
         }
 
         function updatePengajarDropdown(bagian) {
@@ -1006,7 +1024,7 @@
                         cabangUnik = cabangUnik.filter(c => c !== '').sort();
                         
                         let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
-                        let opsiCabangCetak = ''; // Multiple select
+                        let opsiCabangCetak = ''; 
                         
                         cabangUnik.forEach(c => { 
                             opsiCabang += `<option value="${c}">${c}</option>`; 
@@ -1020,6 +1038,7 @@
                         $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                         $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                         $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
+                        $('#pilihBagianCetak').val("Bag. Online").trigger('change.select2');
                         
                         updateKelasDropdown("Bag. Online");
                         updatePengajarDropdown("Bag. Online");
@@ -1097,7 +1116,18 @@
             $('#areaCetakHadir').removeClass('d-none');
             
             // JIKA KOSONG = TAMPILKAN BJJ (DEFAULT TEXT)
-            let labelPrint = selectedKelas.length > 0 ? selectedKelas.join(", ") : "BJJ";
+            let labelPrint = "BJJ";
+            let totalKelasOpsi = $('#pilihKelasCetak option').length;
+            
+            if (selectedKelas.length > 0) {
+                if (selectedKelas.length === totalKelasOpsi && totalKelasOpsi > 0) {
+                    labelPrint = "SEMUA KELAS";
+                } else if (selectedKelas.length <= 4) {
+                    labelPrint = selectedKelas.join(", ");
+                } else {
+                    labelPrint = selectedKelas.slice(0, 4).join(", ") + ", DLL...";
+                }
+            }
             $('#labelKelasCetak').text(labelPrint);
 
             // Sort by Tanggal -> Jam
@@ -1618,7 +1648,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, 
+                                rawRow: row, // Menyimpan referensi row untuk tombol edit
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
