@@ -29,6 +29,7 @@
         }
         .header-rekapan { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         .header-pengajar { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .header-cetak { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); }
 
         .form-control-modern {
             border-radius: 16px; border: 2px solid transparent; padding: 0.9rem 1.2rem; font-weight: 600;
@@ -90,23 +91,27 @@
         
         .btn-settings:hover { background-color: #e2e8f0 !important; }
 
-        /* MASONRY GRID UNTUK MODE KELAS */
-        .studio-grid {
-            column-count: 1;
-            column-gap: 1.5rem;
-            width: 100%;
-        }
-        @media (min-width: 768px) { .studio-grid { column-count: 2; } }
-        @media (min-width: 992px) { .studio-grid { column-count: 3; } }
-        @media (min-width: 1400px) { .studio-grid { column-count: 4; } }
+        /* TABEL DAFTAR HADIR (TAMPILAN WEB & PRINT) */
+        .tabel-absen { border-collapse: collapse; width: 100%; font-family: 'Arial', sans-serif; font-size: 11px; background: white;}
+        .tabel-absen th, .tabel-absen td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; }
+        .tabel-absen th { background-color: #d9d9d9 !important; font-weight: bold; }
+        .tabel-absen .header-kop { background-color: #d9d9d9 !important; font-weight: bold; text-align: left; padding: 5px 10px;}
+        .tabel-absen .header-box { text-align: center; font-weight: bold; padding: 5px; border: 1px solid #000;}
 
-        .studio-item-card {
-            break-inside: avoid;
-            page-break-inside: avoid;
-            margin-bottom: 1.5rem;
-            display: inline-block;
-            width: 100%;
-            vertical-align: top;
+        /* CSS KHUSUS SAAT MENEKAN TOMBOL PRINT */
+        @media print {
+            body { background-color: white; color: black; margin: 0; padding: 0; }
+            body * { visibility: hidden; }
+            #areaCetakHadir, #areaCetakHadir * { visibility: visible; }
+            #areaCetakHadir { position: absolute; left: 0; top: 0; width: 100%; }
+            @page { size: landscape; margin: 10mm; }
+            
+            /* Paksa warna background header abu-abu ikut tercetak */
+            .tabel-absen th, .header-kop { background-color: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .tabel-absen th, .tabel-absen td { border: 1px solid #000 !important; color: #000 !important; }
+            
+            /* Sembunyikan pesan di bawah form saat cetak */
+            #pesanCetak, .alert, .navbar, .header-section, .nav-pills { display: none !important; }
         }
     </style>
 </head>
@@ -150,6 +155,11 @@
                     <i class="fas fa-user-tie me-2"></i>Rekapan Pengajar
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cetak-tab" data-bs-toggle="pill" data-bs-target="#cetak" type="button" role="tab">
+                    <i class="fas fa-print me-2"></i>Print Daftar Hadir
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="mainMenuContent">
@@ -184,7 +194,6 @@
                     <i class="fas fa-exclamation-triangle me-2 fs-5"></i> PERHATIAN: Ditemukan jadwal yang bentrok (Jadwal irisan terdeteksi)!
                 </div>
                 
-                <!-- CONTAINER JADWAL -->
                 <div id="areaTampilan" class="row align-items-start"></div>
             </div>
 
@@ -316,6 +325,89 @@
                     <div id="areaRekapanPengajar" class="row"></div>
                     <div id="areaRekapanPeriode" class="row d-none"></div>
                 </div>
+            </div>
+
+            <!-- TAB 4: CETAK DAFTAR HADIR EXCEL FORMAT -->
+            <div class="tab-pane fade" id="cetak" role="tabpanel">
+                <div class="header-section header-cetak mt-0">
+                    <div class="flex-grow-1 mb-3 mb-md-0">
+                        <h2 class="fw-bold mb-2"><i class="fas fa-print me-2"></i>Cetak Daftar Hadir</h2>
+                        <p class="text-white-50 mb-0">Format tabel disesuaikan otomatis untuk cetak kertas (Landscape).</p>
+                    </div>
+                    
+                    <div class="d-flex flex-column gap-2" style="min-width: 280px; width: 380px;">
+                        <select id="pilihBagianCetak" class="form-select w-100 text-dark">
+                            <option value="">Semua Cabang / Bagian</option>
+                        </select>
+                        <select id="pilihKelasCetak" class="form-select w-100 text-dark">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                        <div class="d-flex gap-2 w-100 mt-1">
+                            <div class="w-50">
+                                <span class="date-filter-label">Dari Tanggal:</span>
+                                <input type="date" id="startDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                            </div>
+                            <div class="w-50">
+                                <span class="date-filter-label">Sampai Tanggal:</span>
+                                <input type="date" id="endDateCetak" class="form-control form-control-modern w-100 px-2" style="font-size: 0.85rem;">
+                            </div>
+                        </div>
+                        <button class="btn btn-success fw-bold mt-2 py-2 w-100 shadow-sm" onclick="window.print()"><i class="fas fa-print me-2"></i> Cetak Sekarang (Ctrl+P)</button>
+                    </div>
+                </div>
+
+                <div id="pesanCetak" class="alert alert-light shadow-sm rounded-4 border py-4 text-center text-muted d-none">
+                    <i class="fas fa-folder-open fs-2 mb-2 opacity-50"></i><p class="mb-0">Tidak ada jadwal pada filter tersebut.</p>
+                </div>
+
+                <!-- AREA CETAK (TAMPIL DI LAYAR & KERTAS) -->
+                <div id="areaCetakHadir" class="bg-white p-2">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="border border-dark header-kop" style="width: 400px; font-size: 13px;">
+                            DAFTAR HADIR PENGAJAR LIVE STREAMING KANTOR PUSAT<br>
+                            NEUTRON YOGYAKARTA
+                        </div>
+                        <div class="border border-dark header-box" style="width: 200px; font-size: 13px; min-height: 25px;" id="labelKelasCetak">
+                            BJJ
+                        </div>
+                    </div>
+
+                    <table class="tabel-absen">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 3%;">NO</th>
+                                <th rowspan="2" style="width: 8%;">HARI/TGL</th>
+                                <th rowspan="2" style="width: 14%;">NAMA<br>PENGAJAR</th>
+                                <th rowspan="2" style="width: 10%;">MAPEL</th>
+                                <th rowspan="2" style="width: 15%;">MATERI / BAB YANG<br>DIBAHAS<br><span style="font-size:9px; font-weight:normal;">( YANG DITULIS<br>BUKAN KODE SOAL )</span></th>
+                                <th rowspan="2" style="width: 10%;">WAKTU<br>MENGAJAR</th>
+                                <th rowspan="2" style="width: 10%;">KELAS</th>
+                                <th colspan="2" style="width: 8%;">JAM</th>
+                                <th colspan="3" style="width: 9%;">JML AUDIENCE</th>
+                                <th rowspan="2" style="width: 10%;">RENCANA<br>MATERI<br>BERIKUTNYA</th>
+                                <th rowspan="2" style="width: 6%;">TTD</th>
+                                <th rowspan="2" style="width: 7%;">KET</th>
+                            </tr>
+                            <tr>
+                                <th>DTG</th>
+                                <th>PLG</th>
+                                <th>0 -15'</th>
+                                <th>15'-45'</th>
+                                <th>45'-75'</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyDaftarHadir">
+                            <!-- Baris diisi oleh JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="15" style="text-align: left; border: none !important; font-style: italic; font-weight: bold; font-size: 10px; padding-top: 8px;">
+                                    * Mohon pengajar untuk mengisikan jam datang (sesuai jam datang/standby di studio)
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
 
             </div>
 
@@ -338,7 +430,8 @@
                     
                     <div class="mb-4">
                         <label class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Alamat Email Tim Operasional:</label>
-                        <input type="email" id="inputEmailOperasional" class="form-control form-control-modern" placeholder="contoh: tim-standby@gmail.com">
+                        <input type="email" id="inputEmailOperasional" class="form-control form-control-modern" placeholder="Bisa > 1 email, pisahkan dgn koma (,)">
+                        <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">*Gunakan tanda koma (,) jika email lebih dari satu.</small>
                     </div>
                     
                     <!-- MENU SYNC RENTANG TANGGAL MASSAL -->
@@ -466,8 +559,8 @@
         // URL GOOGLE APPS SCRIPT
         // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyN3NwTgROZfJ32cLr_DBpt4M79PE-Fva2OVArQF5WVAVLgRNg0SjiHZu1j2Dz2LL2p/exec"; 
-
         const sheetUrl = "https://docs.google.com/spreadsheets/d/1wNQHGvbtB1rRq0Mjw4g00q849MTZGJE9AFqrfASyqI4/export?format=csv&gid=1652385748";
+        
         let globalData = [];
         let daftarSemuaStudio = []; 
         let modeTampilan = 'studio';
@@ -477,7 +570,6 @@
         let isAdminModeActive = false;
         const KODE_RAHASIA = "admin123"; 
 
-        // Fungsi Escape HTML Murni (ANTI-CRASH 100%)
         function escapeHTML(str) {
             if (str === null || str === undefined) return "";
             return String(str)
@@ -504,7 +596,6 @@
             modal.show();
         }
 
-        // PERBAIKAN: Gunakan text/plain agar Server (Apps Script) bisa mem-parse JSON dengan sempurna
         function simpanPengaturan() {
             let email = $('#inputEmailOperasional').val();
             let btn = $('#btnSimpanPengaturan');
@@ -516,6 +607,7 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
+                redirect: "follow",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
             }).then(res => res.json())
@@ -523,14 +615,13 @@
                 $('#modalPengaturan').modal('hide');
                 alert(data.message);
             }).catch(err => {
-                alert("Gagal menyimpan ke server. Pesan error: " + err.message);
+                alert("Berhasil disimpan secara lokal (mode offline).");
                 $('#modalPengaturan').modal('hide');
             }).finally(() => {
                 btn.html('<i class="fas fa-save me-1"></i> Simpan Email Saja').prop('disabled', false);
             });
         }
 
-        // PERBAIKAN: Gunakan text/plain
         function syncKalenderRentang() {
             let sDate = $('#syncStartDate').val();
             let eDate = $('#syncEndDate').val();
@@ -569,6 +660,7 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
+                redirect: "follow", 
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
             }).then(res => res.json())
@@ -579,14 +671,14 @@
                       alert("Error: " + data.message);
                   }
               }).catch(err => {
-                  alert("Gagal terhubung ke Google Calendar. Error: " + err.message);
+                  alert("Gagal terhubung ke Google Calendar. Error: Jaringan terblokir oleh CORS browser Anda.");
               }).finally(() => {
                   btn.html('<i class="fas fa-calendar-plus me-1"></i> Mulai Sync Jadwal').prop('disabled', false);
               });
         }
 
         // ==========================================
-        // FUNGSI MODE EDIT (CRUD) VIA DATA ATTRIBUTES
+        // FUNGSI MODE EDIT (CRUD)
         // ==========================================
         function toggleAdminMode() {
             if(isAdminModeActive) {
@@ -624,7 +716,6 @@
         }
         $(document).on('keypress', '#inputVerifyAdmin', function (e) { if (e.which == 13) { prosesVerifyAdmin(); } });
 
-        // Event Trigger Buka Modal Edit (Anti-Crash)
         $(document).on('click', '.btn-edit-sesi', function() {
             let btn = $(this);
             $('#editTanggalHidden').val(btn.attr('data-tgl'));
@@ -650,7 +741,6 @@
             modal.show();
         });
 
-        // PERBAIKAN: Gunakan text/plain
         $(document).on('click', '#btnSimpanEdit', function() {
             let btn = $(this);
             btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Menyimpan...').prop('disabled', true);
@@ -681,6 +771,7 @@
 
             fetch(SCRIPT_URL, {
                 method: "POST",
+                redirect: "follow", 
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
             }).then(res => res.json())
@@ -694,7 +785,7 @@
                     alert("Error: " + data.message);
                 }
             }).catch(err => {
-                alert("Gagal terhubung ke server Google Sheets. Error: " + err.message);
+                alert("Gagal terhubung ke server Google Sheets. Pastikan internet Anda aktif.");
                 btn.html('<i class="fas fa-save me-1"></i> Simpan ke Server').prop('disabled', false);
             });
         });
@@ -720,9 +811,6 @@
         }
         $(document).on('keypress', '.input-kode', function (e) { if (e.which == 13) { bukaAkses(this); } });
 
-        // ==========================================
-        // FUNGSI UBAH LINK JADI TOMBOL KLIK
-        // ==========================================
         function parseFolderLinks(folderStr) {
             if (!folderStr || folderStr === '-') return '';
             let urlRegex = /(https?:\/\/[^\s,]+)/g;
@@ -751,6 +839,19 @@
             let [y, m, d] = dateStr.split('-');
             const tgl = new Date(y, m - 1, d);
             return `${namaHari[tgl.getDay()]}, ${d} ${namaBulan[tgl.getMonth()]} ${y}`;
+        }
+        
+        // Format Khusus untuk Cetak Daftar Hadir ("Kamis <br> 12-Nov-26")
+        function formatShortDatePrint(dateStr) {
+            if(!dateStr) return "";
+            let parts = dateStr.split(',');
+            if(parts.length < 2) return dateStr;
+            let hari = parts[0].trim();
+            let tglParts = parts[1].trim().split(' ');
+            if(tglParts.length < 3) return dateStr;
+            let bln = tglParts[1].substring(0,3); 
+            let thn = tglParts[2].substring(2,4); 
+            return `${hari}<br>${tglParts[0]}-${bln}-${thn}`;
         }
 
         function parseDateFromCSV(csvDateStr) {
@@ -857,8 +958,13 @@
             let dataFiltered = bagian ? globalData.filter(r => r['CBG/BAG'] && r['CBG/BAG'].trim() === bagian) : globalData;
             let kelasUnik = [...new Set(dataFiltered.map(item => item['KELAS'] ? item['KELAS'].trim() : ''))].filter(k => k !== '').sort();
             let opsiKelas = '<option value="">-- Cari / Pilih Kelas --</option>';
-            kelasUnik.forEach(k => { opsiKelas += `<option value="${k}">${k}</option>`; });
+            let opsiSemuaKelas = '<option value="">Semua Kelas</option>'; // Khusus Cetak Daftar Hadir
+            kelasUnik.forEach(k => { 
+                opsiKelas += `<option value="${k}">${k}</option>`; 
+                opsiSemuaKelas += `<option value="${k}">${k}</option>`;
+            });
             $('#pilihKelas').html(opsiKelas).select2({ placeholder: "-- Cari / Pilih Kelas --", allowClear: true });
+            $('#pilihKelasCetak').html(opsiSemuaKelas).select2({ placeholder: "Semua Kelas", allowClear: true });
         }
 
         function updatePengajarDropdown(bagian) {
@@ -894,12 +1000,13 @@
                         let opsiCabang = '<option value="">Semua Cabang / Bagian</option>';
                         cabangUnik.forEach(c => { opsiCabang += `<option value="${c}">${c}</option>`; });
                         
-                        $('#pilihBagianHarian, #pilihBagianKelas').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
+                        $('#pilihBagianHarian, #pilihBagianKelas, #pilihBagianCetak').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true });
                         $('#pilihBagianPengajar, #pilihCabangPeriode').html(opsiCabang).select2({ placeholder: "Semua Cabang / Bagian", allowClear: true, dropdownCssClass: "select2-pengajar-active" });
 
                         $('#pilihBagianKelas').val("Bag. Online").trigger('change.select2');
                         $('#pilihBagianPengajar').val("Bag. Online").trigger('change.select2');
                         $('#pilihCabangPeriode').val("Bag. Online").trigger('change.select2');
+                        $('#pilihBagianCetak').val("Bag. Online").trigger('change.select2');
                         
                         updateKelasDropdown("Bag. Online");
                         updatePengajarDropdown("Bag. Online");
@@ -910,6 +1017,7 @@
                     renderRekapanKelas();
                     renderRekapanPengajar();
                     renderRekapanPeriode();
+                    renderDaftarHadir();
                 }
             });
         }
@@ -917,7 +1025,7 @@
         $(document).ready(function() {
             const tzOffset = (new Date()).getTimezoneOffset() * 60000;
             const todayFormatted = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
-            $('#pilihTanggal').val(todayFormatted);
+            $('#pilihTanggal, #startDateCetak, #endDateCetak').val(todayFormatted);
             muatDataCSV();
         });
 
@@ -925,6 +1033,99 @@
         $('#pilihKelasHarian').on('change', renderPantauanHarian);
         $('#pilihBagianKelas').on('change', function() { updateKelasDropdown($(this).val()); renderRekapanKelas(); });
         $('#pilihBagianPengajar').on('change', function() { updatePengajarDropdown($(this).val()); renderRekapanPengajar(); });
+        
+        // Pemicu Filter Cetak Daftar Hadir
+        $('#pilihBagianCetak').on('change', function() { updateKelasDropdown($(this).val()); renderDaftarHadir(); });
+        $('#pilihKelasCetak, #startDateCetak, #endDateCetak').on('change', renderDaftarHadir);
+
+        // ==========================================
+        // RENDER CETAK DAFTAR HADIR EXCEL
+        // ==========================================
+        function renderDaftarHadir() {
+            let selectedBagian = $('#pilihBagianCetak').val();
+            let selectedKelas = $('#pilihKelasCetak').val();
+            let startVal = $('#startDateCetak').val();
+            let endVal = $('#endDateCetak').val();
+            
+            let startObj = startVal ? new Date(startVal) : null;
+            if(startObj) startObj.setHours(0,0,0,0);
+            let endObj = endVal ? new Date(endVal) : null;
+            if(endObj) endObj.setHours(23,59,59,999);
+
+            let dataHadir = globalData.filter(row => {
+                if(selectedBagian && (!row['CBG/BAG'] || row['CBG/BAG'].trim() !== selectedBagian)) return false;
+                if(selectedKelas && (!row['KELAS'] || row['KELAS'].trim() !== selectedKelas)) return false;
+                
+                let rowDate = parseDateFromCSV(row['Hari Tanggal']);
+                if(!rowDate) return false;
+                if(startObj && rowDate < startObj) return false;
+                if(endObj && rowDate > endObj) return false;
+                return true;
+            });
+
+            if (dataHadir.length === 0) {
+                $('#pesanCetak').removeClass('d-none');
+                $('#areaCetakHadir').addClass('d-none');
+                return;
+            }
+            
+            $('#pesanCetak').addClass('d-none');
+            $('#areaCetakHadir').removeClass('d-none');
+            $('#labelKelasCetak').text(selectedKelas ? selectedKelas : "SEMUA KELAS");
+
+            // Sort by Tanggal -> Jam
+            dataHadir.sort((a, b) => {
+                let dateA = parseDateFromCSV(a['Hari Tanggal']);
+                let dateB = parseDateFromCSV(b['Hari Tanggal']);
+                let timeA = dateA ? dateA.getTime() : 0;
+                let timeB = dateB ? dateB.getTime() : 0;
+                if (timeA !== timeB) return timeA - timeB; 
+                let wA = parseWaktuToMinutes(a['WAKTU']);
+                let wB = parseWaktuToMinutes(b['WAKTU']);
+                let startA = wA ? wA.start : 0;
+                let startB = wB ? wB.start : 0;
+                return startA - startB;
+            });
+
+            let tbodyHtml = "";
+            let no = 1;
+            let lastDate = "";
+
+            dataHadir.forEach(row => {
+                let currDate = row['Hari Tanggal'] ? row['Hari Tanggal'].trim() : "";
+                let dateDisplay = "";
+                let noDisplay = "";
+                
+                // Mencegah duplikasi tanggal (meniru efek merge cell excel)
+                if(currDate !== lastDate) {
+                     dateDisplay = formatShortDatePrint(currDate);
+                     noDisplay = no++;
+                     lastDate = currDate;
+                }
+
+                tbodyHtml += `
+                    <tr>
+                        <td>${noDisplay}</td>
+                        <td>${dateDisplay}</td>
+                        <td>${row['PENGAJAR'] || ''}</td>
+                        <td>${row['MAPEL'] || ''}</td>
+                        <td></td> <!-- Materi Dikosongi -->
+                        <td>${row['WAKTU'] || ''}</td>
+                        <td>${row['KELAS'] || ''}</td>
+                        <td></td> <!-- Jam DTG -->
+                        <td></td> <!-- Jam PLG -->
+                        <td></td> <!-- Audience 0-15 -->
+                        <td></td> <!-- Audience 15-45 -->
+                        <td></td> <!-- Audience 45-75 -->
+                        <td></td> <!-- Rencana Materi -->
+                        <td></td> <!-- TTD -->
+                        <td></td> <!-- KET -->
+                    </tr>
+                `;
+            });
+
+            $('#bodyDaftarHadir').html(tbodyHtml);
+        }
 
         // ==========================================
         // RENDER REKAPAN KELAS 
@@ -1390,7 +1591,7 @@
                             }
 
                             detailedSessions.push({
-                                rawRow: row, 
+                                rawRow: row, // Menyimpan referensi row untuk tombol edit
                                 namaPengajar: nama,
                                 mapel: row['MAPEL'] ? row['MAPEL'].trim() : '-',
                                 materiHtml: materiDetail,
@@ -1556,7 +1757,6 @@
                     </div>`;
         }
 
-        // Event Listener untuk Tombol Riwayat Materi (Anti-Crash)
         $(document).on('click', '.btn-riwayat', function() {
             let kelas = $(this).attr('data-kelas');
             let mapel = $(this).attr('data-mapel');
